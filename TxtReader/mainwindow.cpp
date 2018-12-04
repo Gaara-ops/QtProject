@@ -11,14 +11,21 @@ MainWindow::MainWindow(QWidget *parent) :
 	  set window to max
 	this->setWindowState(Qt::WindowMaximized);*/
 	m_timer = new QTimer(this);
+	m_timeSpace = 200;
     m_currentRow = 0;
     m_scrollIndex = 0;
+	m_fileName = "";
 	connect(ui->textEdit->verticalScrollBar(),SIGNAL(sliderMoved(int)),
 			this,SLOT(slotSlideBarMoved(int)));
 }
 
 MainWindow::~MainWindow()
 {
+	if(m_timer != NULL){
+		m_timer->stop();
+		delete m_timer;
+		m_timer = NULL;
+	}
     delete ui;
 }
 
@@ -30,34 +37,32 @@ void MainWindow::UpdateListWidget()
 
 void MainWindow::SaveStatus()
 {
+	if(m_fileName == ""){
+		return;
+	}
     QString fontname = m_font.family();
     int pointsize = m_font.pointSize();
-    int weight = m_font.weight();
-
-    m_scrollIndex = ui->textEdit->verticalScrollBar()->sliderPosition();
+	int weight = m_font.weight();
+	m_scrollIndex = ui->textEdit->verticalScrollBar()->sliderPosition();
 
 	QJsonObject json;
 	json.insert("fontname",QString(fontname));
     json.insert("pointsize",pointsize);
     json.insert("weight",weight);
     json.insert("gindex",m_currentRow);
-    json.insert("scrollindex",m_scrollIndex);
-	QJsonObject jsonwindow;
-	jsonwindow.insert("width",this->frameGeometry().width());
-	jsonwindow.insert("height",this->frameGeometry().height());
-	QJsonArray jsonarr;
-	jsonarr.push_back(json);
-	jsonarr.push_back(jsonwindow);
-	QJsonObject jsonobj;
-	jsonobj.insert("configure",jsonarr);
+	json.insert("scrollindex",m_scrollIndex);
+	json.insert("posx",this->geometry().x());
+	json.insert("posy",this->geometry().y());
+	json.insert("width",this->geometry().width());
+	json.insert("height",this->geometry().height());
 
-
-    QFile file("./configure.txt");
+	QString configname = getPath();
+	QFile file(configname);
     file.open( QIODevice::WriteOnly);
     QTextStream out(&file);
 	out.setCodec(QTextCodec::codecForName("UTF-8"));
     QJsonDocument document;
-	document.setObject(jsonobj);
+	document.setObject(json);
     QByteArray byteArray = document.toJson(QJsonDocument::Compact);
 	QString strJson(byteArray);
     out << strJson;
@@ -66,59 +71,34 @@ void MainWindow::SaveStatus()
 
 void MainWindow::SetStatus()
 {
-    QFile file("./configure.txt");
-    if(!file.open(QIODevice::ReadOnly))
-    {
-         return;
-    }
+	QString configname = getPath();
     QString fontname;
     int pointsize = 0;
     int weight = 0;
+	int posx=0,posy=0,width=0,height=0;
+	ParseJson(configname,fontname,pointsize,weight,posx,posy,
+			  width,height,m_currentRow,m_scrollIndex);
+	m_font.setFamily(fontname.toUtf8());
+	m_font.setPointSize(pointsize);
+	m_font.setWeight(weight);
 
-    QTextStream in(&file);
-    in.setCodec(QTextCodec::codecForName("UTF-8"));
-        QString allData = in.readAll();
-		QByteArray byteArray = allData.toUtf8();
-        QJsonParseError jsonError;
-        QJsonDocument doucment = QJsonDocument::fromJson(byteArray,&jsonError);
-		if(!doucment.isNull()&&(jsonError.error == QJsonParseError::NoError)){
-            if (doucment.isObject()) {
-                QJsonObject object = doucment.object();
-				if (object.contains("fontname")) {
-                    QJsonValue value = object.value("fontname");
-                    if (value.isString()){
-                        fontname = value.toString();
-                    }
-                }
-                if (object.contains("pointsize")) {
-                    QJsonValue value = object.value("pointsize");
-                    pointsize = value.toInt();
-                }
-                if (object.contains("weight")) {
-                    QJsonValue value = object.value("weight");
-                    weight = value.toInt();
-                }
-                if (object.contains("gindex")) {
-                    QJsonValue value = object.value("gindex");
-                    m_currentRow = value.toInt();
-                }
-                if (object.contains("scrollindex")) {
-                    QJsonValue value = object.value("scrollindex");
-                    m_scrollIndex = value.toInt();
-                }
-            }
-            m_font.setFamily(fontname.toUtf8());
-            m_font.setPointSize(pointsize);
-			m_font.setWeight(weight);
-        }
-    file.close();
-
+	this->setGeometry(posx,posy,width,height);
     ui->listWidget->setCurrentRow(m_currentRow);
     ui->textEdit->setText(m_data.at(m_currentRow));
     ui->textEdit->setFont(m_font);
 	ui->textEdit->update();
 	connect(m_timer,SIGNAL(timeout()),this,SLOT(slotUpdateSlide()));
 	m_timer->start(500);
+}
+
+QString MainWindow::getPath()
+{
+	QString filename = m_fileName.split("/").last();
+	QString prefixpath = "./Configure/";
+	CreateDir(prefixpath);
+	QString configname = prefixpath +filename.split(".").first() +
+											"configure.txt";
+	return configname;
 }
 
 void MainWindow::closeEvent(QCloseEvent *e)
@@ -181,8 +161,8 @@ void MainWindow::slotUpdateSlide()
 		return;
 	}
 	int maxindex = ui->textEdit->verticalScrollBar()->maximum();
-	if(maxindex<=m_scrollIndex){
-		m_scrollIndex = maxindex/2;
+	if(maxindex<m_scrollIndex){
+		return;
 	}
 	ui->textEdit->verticalScrollBar()->setSliderPosition(m_scrollIndex);
 	ui->textEdit->verticalScrollBar()->update();
@@ -212,7 +192,7 @@ void MainWindow::on_playBtn_clicked(bool checked)
 {
 	if(checked){
 		connect(m_timer,SIGNAL(timeout()),this,SLOT(slotPlay()));
-		m_timer->start(200);
+		m_timer->start(m_timeSpace);
 	}else{
 		m_timer->stop();
 		disconnect(m_timer,SIGNAL(timeout()),this,SLOT(slotPlay()));
@@ -222,13 +202,33 @@ void MainWindow::on_playBtn_clicked(bool checked)
 void MainWindow::on_actionOpen_triggered()
 {
 	//open file--farther dialog，name，path，filter
-	QString s = QFileDialog::getOpenFileName(this,
+	m_fileName = QFileDialog::getOpenFileName(this,
 											 "open file dialog",
 											 "./",
 											 "files(*)");
-	ReadFile(s,m_headData,m_data);
+	if(m_fileName == "")
+		return;
+	ReadFile(m_fileName,m_headData,m_data);
 	for(int i=0;i<m_headData.size();i++){
 		ui->listWidget->addItem(m_headData.at(i));
 	}
-	//SetStatus();
+	SetStatus();
+}
+
+void MainWindow::on_SpeedUpBtn_clicked()
+{
+	m_timer->stop();
+	m_timeSpace /= 2;
+	if(m_timeSpace <= 10)
+		m_timeSpace = 10;
+	m_timer->start(m_timeSpace);
+}
+
+void MainWindow::on_SpeedDownBtn_clicked()
+{
+	m_timer->stop();
+	m_timeSpace *= 2;
+	if(m_timeSpace >= 800)
+		m_timeSpace = 800;
+	m_timer->start(m_timeSpace);
 }

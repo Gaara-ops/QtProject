@@ -55,12 +55,26 @@
            </spacer>
           </item>
           <item>
+           <widget class="QPushButton" name="SpeedDownBtn">
+            <property name="text">
+             <string> &lt;2x</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="playBtn">
             <property name="text">
              <string>Play</string>
             </property>
             <property name="checkable">
              <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="SpeedUpBtn">
+            <property name="text">
+             <string>x2&gt;</string>
             </property>
            </widget>
           </item>

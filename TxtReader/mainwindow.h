@@ -34,6 +34,7 @@ public:
     void UpdateListWidget();
     void SaveStatus();
     void SetStatus();
+	QString getPath();
 	void closeEvent(QCloseEvent *e);
 private slots:
     void on_upBtn_clicked();
@@ -52,6 +53,10 @@ private slots:
 
 	void on_actionOpen_triggered();
 
+	void on_SpeedUpBtn_clicked();
+
+	void on_SpeedDownBtn_clicked();
+
 public slots:
 	void slotUpdateSlide();
 	void slotPlay();
@@ -59,8 +64,10 @@ public slots:
 private:
     Ui::MainWindow *ui;
 	QTimer* m_timer;
+	int m_timeSpace;
     int m_currentRow;
     int m_scrollIndex;
+	QString m_fileName;
     QList<QString> m_data;
 	QList<QString> m_headData;
     QFont m_font;
