@@ -17,6 +17,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	m_fileName = "";
 	connect(ui->textEdit->verticalScrollBar(),SIGNAL(sliderMoved(int)),
 			this,SLOT(slotSlideBarMoved(int)));
+	connect(ui->textEdit->verticalScrollBar(),SIGNAL(valueChanged(int)),
+			this,SLOT(slotScrollPosChange(int)));
 }
 
 MainWindow::~MainWindow()
@@ -43,30 +45,14 @@ void MainWindow::SaveStatus()
     QString fontname = m_font.family();
     int pointsize = m_font.pointSize();
 	int weight = m_font.weight();
+	int posx = this->geometry().x();
+	int posy = this->geometry().y();
+	int width = this->geometry().width();
+	int height = this->geometry().height();
 	m_scrollIndex = ui->textEdit->verticalScrollBar()->sliderPosition();
-
-	QJsonObject json;
-	json.insert("fontname",QString(fontname));
-    json.insert("pointsize",pointsize);
-    json.insert("weight",weight);
-    json.insert("gindex",m_currentRow);
-	json.insert("scrollindex",m_scrollIndex);
-	json.insert("posx",this->geometry().x());
-	json.insert("posy",this->geometry().y());
-	json.insert("width",this->geometry().width());
-	json.insert("height",this->geometry().height());
-
 	QString configname = getPath();
-	QFile file(configname);
-    file.open( QIODevice::WriteOnly);
-    QTextStream out(&file);
-	out.setCodec(QTextCodec::codecForName("UTF-8"));
-    QJsonDocument document;
-	document.setObject(json);
-    QByteArray byteArray = document.toJson(QJsonDocument::Compact);
-	QString strJson(byteArray);
-    out << strJson;
-    file.close();
+	SaveJosn(configname,fontname,pointsize,weight,posx,posy,
+			 width,height,m_currentRow,m_scrollIndex);
 }
 
 void MainWindow::SetStatus()
@@ -76,8 +62,10 @@ void MainWindow::SetStatus()
     int pointsize = 0;
     int weight = 0;
 	int posx=0,posy=0,width=0,height=0;
-	ParseJson(configname,fontname,pointsize,weight,posx,posy,
+	bool succeed = ParseJson(configname,fontname,pointsize,weight,posx,posy,
 			  width,height,m_currentRow,m_scrollIndex);
+	if(!succeed)
+		return;
 	m_font.setFamily(fontname.toUtf8());
 	m_font.setPointSize(pointsize);
 	m_font.setWeight(weight);
@@ -112,28 +100,31 @@ void MainWindow::closeEvent(QCloseEvent *e)
 		e->accept();
 	}
 	else
-	  e->ignore();
+		e->ignore();
 }
 
 void MainWindow::on_upBtn_clicked()
 {
     m_currentRow--;
+	m_scrollIndex = 0;
     UpdateListWidget();
 }
 
 void MainWindow::on_downBtn_clicked()
 {
     m_currentRow++;
+	m_scrollIndex = 0;
     UpdateListWidget();
 }
 
 void MainWindow::on_listWidget_currentRowChanged(int currentRow)
 {
-    m_currentRow = currentRow;
+	m_currentRow = currentRow;
 }
 
 void MainWindow::on_listWidget_itemDoubleClicked(QListWidgetItem *item)
 {
+	m_scrollIndex = 0;
     UpdateListWidget();
 }
 
@@ -188,6 +179,11 @@ void MainWindow::slotSlideBarMoved(int pos)
 	m_scrollIndex = pos;
 }
 
+void MainWindow::slotScrollPosChange(int pos)
+{
+	m_scrollIndex = pos;
+}
+
 void MainWindow::on_playBtn_clicked(bool checked)
 {
 	if(checked){
@@ -217,6 +213,9 @@ void MainWindow::on_actionOpen_triggered()
 
 void MainWindow::on_SpeedUpBtn_clicked()
 {
+	if(!m_timer->isActive()){
+		return;
+	}
 	m_timer->stop();
 	m_timeSpace /= 2;
 	if(m_timeSpace <= 10)
@@ -226,6 +225,9 @@ void MainWindow::on_SpeedUpBtn_clicked()
 
 void MainWindow::on_SpeedDownBtn_clicked()
 {
+	if(!m_timer->isActive()){
+		return;
+	}
 	m_timer->stop();
 	m_timeSpace *= 2;
 	if(m_timeSpace >= 800)

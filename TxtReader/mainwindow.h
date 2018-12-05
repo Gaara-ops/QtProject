@@ -19,6 +19,8 @@
 #include <QCloseEvent>
 #include <QTimer>
 #include <QFileDialog>
+#include <QTextEdit>
+#include <QWheelEvent>
 
 namespace Ui {
 class MainWindow;
@@ -61,6 +63,7 @@ public slots:
 	void slotUpdateSlide();
 	void slotPlay();
 	void slotSlideBarMoved(int pos);
+	void slotScrollPosChange(int pos);
 private:
     Ui::MainWindow *ui;
 	QTimer* m_timer;
