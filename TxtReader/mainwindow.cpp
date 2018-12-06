@@ -6,7 +6,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
+	ui->setupUi(this);
+	SetWidgetVisible(0);
 	/**
 	  set window to max
 	this->setWindowState(Qt::WindowMaximized);*/
@@ -28,7 +29,14 @@ MainWindow::~MainWindow()
 		delete m_timer;
 		m_timer = NULL;
 	}
-    delete ui;
+	delete ui;
+}
+
+void MainWindow::SetWidgetVisible(bool isvisible)
+{
+	ui->widget->setVisible(isvisible);
+	ui->listWidget->setVisible(isvisible);
+	ui->textEdit->setVisible(isvisible);
 }
 
 void MainWindow::UpdateListWidget()
@@ -75,6 +83,7 @@ void MainWindow::SetStatus()
     ui->textEdit->setText(m_data.at(m_currentRow));
     ui->textEdit->setFont(m_font);
 	ui->textEdit->update();
+	SetWidgetVisible(1);
 	connect(m_timer,SIGNAL(timeout()),this,SLOT(slotUpdateSlide()));
 	m_timer->start(500);
 }
@@ -106,6 +115,9 @@ void MainWindow::closeEvent(QCloseEvent *e)
 void MainWindow::on_upBtn_clicked()
 {
     m_currentRow--;
+	if(m_currentRow <=0){
+		m_currentRow = 0;
+	}
 	m_scrollIndex = 0;
     UpdateListWidget();
 }
@@ -113,6 +125,9 @@ void MainWindow::on_upBtn_clicked()
 void MainWindow::on_downBtn_clicked()
 {
     m_currentRow++;
+	if(m_currentRow >= m_headData.size()){
+		m_currentRow = m_headData.size()-1;
+	}
 	m_scrollIndex = 0;
     UpdateListWidget();
 }
@@ -135,8 +150,10 @@ void MainWindow::on_actionFont_triggered()
     m_font = QFontDialog::getFont(&ok,m_font);
     if (ok)
     {
-        ui->textEdit->setFont(m_font);
-        ui->textEdit->update();
+		if(ui->textEdit->isVisible()){
+			ui->textEdit->setFont(m_font);
+			ui->textEdit->update();
+		}
     }
 }
 
@@ -202,8 +219,10 @@ void MainWindow::on_actionOpen_triggered()
 											 "open file dialog",
 											 "./",
 											 "files(*)");
-	if(m_fileName == "")
+	if(m_fileName == ""){
+
 		return;
+	}
 	ReadFile(m_fileName,m_headData,m_data);
 	for(int i=0;i<m_headData.size();i++){
 		ui->listWidget->addItem(m_headData.at(i));

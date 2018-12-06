@@ -33,6 +33,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+	void SetWidgetVisible(bool isvisible);
     void UpdateListWidget();
     void SaveStatus();
     void SetStatus();
