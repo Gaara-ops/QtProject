@@ -6,7 +6,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setWindowTitle(tr("Qt Test"));
+	setWindowTitle(tr("Qt Test"));
 	m_timer = new QTimer(this);
 	connect(m_timer,SIGNAL(timeout()),this,SLOT(slotTimeOut()));
 }

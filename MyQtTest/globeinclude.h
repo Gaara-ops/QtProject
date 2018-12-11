@@ -43,6 +43,7 @@
 #include<QList>
 #include<QFontDialog>
 #include<QScrollBar>
+#include<QPainter>
 
 #include<windows.h>
 #include<psapi.h>

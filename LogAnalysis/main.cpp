@@ -28,7 +28,9 @@ bool WriteToFile(QByteArray& line,QByteArray& flag,int& timeindex,
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    QString strFormat = "yyyy-MM-dd HH:mm:ss:zzz";
+	MainWindow w;
+	w.show();
+	/*QString strFormat = "yyyy-MM-dd HH:mm:ss:zzz";
     QString nowdatetime = QDateTime::currentDateTime().toString("yyyy_MM_dd_hh_mm_ss");
     QString strFileName = "./" +nowdatetime + "_logAnalysis.txt";
     QFile outFile(strFileName);
@@ -79,6 +81,6 @@ int main(int argc, char *argv[])
              << "interface time:" << allTime;
     inFile.close();
     outFile.close();
-    qDebug() << "end";
+	qDebug() << "end";*/
     return a.exec();
 }

@@ -18,7 +18,7 @@ TARGET = MyQtTest
 
 TEMPLATE = app
 
-CONFIG += c++11 qt warn_on release
+CONFIG += c++11 qt warn_on
 
 SOURCES += main.cpp\
         mainwindow.cpp

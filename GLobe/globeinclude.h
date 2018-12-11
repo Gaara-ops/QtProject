@@ -38,7 +38,7 @@
 #include<QProgressDialog>
 #include<QTest>
 #include<QComboBox>
-
+#include<QPainter>
 
 
 
