@@ -29,7 +29,8 @@
 ## RayTracingTest
 1.一个简单的光线追踪例子
 
-##TxtReader
+
+## TxtReader
 1.读取一个txt文档，然后将标题和内容关联起来
 
 - 获取窗口的大小和位置
@@ -39,5 +40,5 @@
 - 左侧的listwidget与右侧textEdit中的内容关联
 - 打开文件对话框选择文件
 
-##MyQtTest
+## MyQtTest
 qt测试demo
