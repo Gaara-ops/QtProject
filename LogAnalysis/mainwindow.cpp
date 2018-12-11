@@ -107,12 +107,12 @@ void MainWindow::DrawCurve()
 			painter.drawPoint(beginPos);
 		}
 
-		/*draw filled plygon
+		/*draw filled plygon*/
 		QPainterPath polygonpath;
 		painter.setPen(QPen(Qt::blue, 2));
 		QPolygon polygon(m_clickPosVec);
 		polygonpath.addPolygon(polygon);
-		painter.fillPath(polygonpath, QBrush(Qt::cyan));*/
+		painter.fillPath(polygonpath, QBrush(Qt::cyan));
 		m_clickPosVec.removeLast();
 		if(!m_drawCurve){
 			m_clickPosVec.clear();
@@ -143,6 +143,7 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *e)
 	}
 	if(e->button() == 0x00000002){
 		m_drawCurve = false;
+		m_clickPosVec.clear();
 	}
 }
 
