@@ -83,7 +83,6 @@ void MainWindow::SetStatus()
     ui->textEdit->setText(m_data.at(m_currentRow));
     ui->textEdit->setFont(m_font);
 	ui->textEdit->update();
-	SetWidgetVisible(1);
 	connect(m_timer,SIGNAL(timeout()),this,SLOT(slotUpdateSlide()));
 	m_timer->start(500);
 }
@@ -164,7 +163,6 @@ void MainWindow::on_actionSaveStatus_triggered()
 
 void MainWindow::slotUpdateSlide()
 {
-	qDebug() << "update slide";
 	if(ui->textEdit->verticalScrollBar()->maximum() == 0){
 		return;
 	}
@@ -227,6 +225,7 @@ void MainWindow::on_actionOpen_triggered()
 	for(int i=0;i<m_headData.size();i++){
 		ui->listWidget->addItem(m_headData.at(i));
 	}
+	SetWidgetVisible(1);
 	SetStatus();
 }
 

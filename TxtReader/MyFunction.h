@@ -131,15 +131,18 @@ void ReadFile(QString filename,QList<QString>& headdata,QList<QString>& data){
 			continue;
 		}
 		if(!oneline.at(0).isSpace()){
-			headdata.append(oneline);
-			if(aGra != ""){
-				data.append(aGra);
-				aGra = "";
+			if(oneline.startsWith("第")){
+				headdata.append(oneline);
+				if(aGra != ""){
+					data.append(aGra);
+					aGra = "";
+				}
 			}
 		}else{
 			aGra += oneline + "\n";
 		}
 	}
+	qDebug()<<headdata.size()<<data.size();
 	file.close();
 }
 
