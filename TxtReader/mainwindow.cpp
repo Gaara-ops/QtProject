@@ -111,6 +111,13 @@ void MainWindow::closeEvent(QCloseEvent *e)
 		e->ignore();
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *e)
+{
+	if(e->key() == Qt::Key_D){
+		on_downBtn_clicked();
+	}
+}
+
 void MainWindow::on_upBtn_clicked()
 {
     m_currentRow--;

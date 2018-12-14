@@ -39,6 +39,7 @@ public:
     void SetStatus();
 	QString getPath();
 	void closeEvent(QCloseEvent *e);
+	void keyPressEvent(QKeyEvent *e);
 private slots:
     void on_upBtn_clicked();
 
