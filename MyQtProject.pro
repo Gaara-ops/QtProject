@@ -5,4 +5,5 @@ SUBDIRS += \
     MyQtTest \
     MemoryShow \
     RayTracingTest \
-    TxtReader
+    TxtReader \
+    NetworkRequest

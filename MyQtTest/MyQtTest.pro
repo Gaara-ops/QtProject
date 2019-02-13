@@ -24,6 +24,7 @@ SOURCES += main.cpp\
         mainwindow.cpp
 
 HEADERS  += mainwindow.h \
+         += globeinclude.h \
 
 FORMS    += mainwindow.ui
 #freeglut
@@ -34,7 +35,9 @@ LIBS += -L$${libdirglew} libglew32
 #freeglut
 LIBS += -L$${libdir} libfreeglut
 
-
+#添加log4cpp头文件和库
+INCLUDEPATH += F:\log4cpp\log4cpp-lib\include
+LIBS += F:/log4cpp/log4cpp-lib/lib/liblog4cppD.a
 
 
 LIBS += -lopengl32 -lwinmm -lgdi32 -lm -lglu32 -lpsapi

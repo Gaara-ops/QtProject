@@ -40,5 +40,11 @@
 - 左侧的listwidget与右侧textEdit中的内容关联
 - 打开文件对话框选择文件
 
+## NetworkRequest
+1.一个网络请求的小例子
+
+- post请求
+- get请求
+
 ## MyQtTest
 qt测试demo
