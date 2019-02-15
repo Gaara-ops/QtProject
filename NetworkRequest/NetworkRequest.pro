@@ -14,9 +14,15 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    networkope.cpp
+    networkope.cpp \
+    udpserver.cpp \
+    udpclient.cpp
 
 HEADERS  += mainwindow.h \
-    networkope.h
+    networkope.h \
+    udpserver.h \
+    udpclient.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    udpserver.ui \
+    udpclient.ui

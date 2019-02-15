@@ -158,6 +158,14 @@
      <height>23</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuTransForm">
+    <property name="title">
+     <string>UDP/TCP</string>
+    </property>
+    <addaction name="actionUDPClient"/>
+    <addaction name="actionUDPServer"/>
+   </widget>
+   <addaction name="menuTransForm"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -168,6 +176,16 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionUDPClient">
+   <property name="text">
+    <string>UDPorTCP-Client</string>
+   </property>
+  </action>
+  <action name="actionUDPServer">
+   <property name="text">
+    <string>UDPorTCP-Server</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
