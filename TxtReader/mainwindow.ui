@@ -134,8 +134,15 @@
     </property>
     <addaction name="actionFont"/>
    </widget>
+   <widget class="QMenu" name="menuMusic">
+    <property name="title">
+     <string>Music</string>
+    </property>
+    <addaction name="actionOpenMusic"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuMusic"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -159,6 +166,11 @@
   <action name="actionOpen">
    <property name="text">
     <string>Open</string>
+   </property>
+  </action>
+  <action name="actionOpenMusic">
+   <property name="text">
+    <string>OpenMusic</string>
    </property>
   </action>
  </widget>

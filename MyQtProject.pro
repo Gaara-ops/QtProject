@@ -6,4 +6,6 @@ SUBDIRS += \
     MemoryShow \
     RayTracingTest \
     TxtReader \
-    NetworkRequest
+    NetworkRequest \
+    MyRayTracingLearn \
+    RayTraceWidget

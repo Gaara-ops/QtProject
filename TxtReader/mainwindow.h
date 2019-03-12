@@ -22,6 +22,8 @@
 #include <QTextEdit>
 #include <QWheelEvent>
 
+#include <QMediaPlayer>
+
 namespace Ui {
 class MainWindow;
 }
@@ -61,6 +63,8 @@ private slots:
 
 	void on_SpeedDownBtn_clicked();
 
+    void on_actionOpenMusic_triggered();
+
 public slots:
 	void slotUpdateSlide();
 	void slotPlay();
@@ -76,6 +80,8 @@ private:
     QList<QString> m_data;
 	QList<QString> m_headData;
     QFont m_font;
+
+    QMediaPlayer* m_player;
 };
 
 #endif // MAINWINDOW_H

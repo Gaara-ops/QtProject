@@ -10,7 +10,7 @@ libdir=F:/opengl/freeglut-3.0.0/freeglutlibrelease/lib
 prefixglew=F:/opengl/glew-2.1.0/lib
 libdirglew=F:/opengl/glew-2.1.0/lib/lib
 
-QT       += core gui
+QT       += core gui multimediawidgets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

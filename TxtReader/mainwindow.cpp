@@ -20,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent) :
 			this,SLOT(slotSlideBarMoved(int)));
 	connect(ui->textEdit->verticalScrollBar(),SIGNAL(valueChanged(int)),
 			this,SLOT(slotScrollPosChange(int)));
+
+    m_player = NULL;
 }
 
 MainWindow::~MainWindow()
@@ -36,7 +38,7 @@ void MainWindow::SetWidgetVisible(bool isvisible)
 {
 	ui->widget->setVisible(isvisible);
 	ui->listWidget->setVisible(isvisible);
-	ui->textEdit->setVisible(isvisible);
+    ui->textEdit->setVisible(1);
 }
 
 void MainWindow::UpdateListWidget()
@@ -114,8 +116,24 @@ void MainWindow::closeEvent(QCloseEvent *e)
 void MainWindow::keyPressEvent(QKeyEvent *e)
 {
 	if(e->key() == Qt::Key_D){
-		on_downBtn_clicked();
+        //on_downBtn_clicked();
 	}
+
+    if(e->key() == Qt::Key_D){
+        if(m_player != NULL){
+            qint64 msecond = m_player->position();
+            float senond = msecond/1000.0;
+            int gSecond = (int)senond;
+            int gMSecond = (senond-gSecond)*1000;
+            if(gSecond >59 &&  gMSecond >0){
+                int gMinute = gSecond/60;
+                gSecond = gSecond%60;
+                qDebug() << gMinute << ":"<<gSecond<<":"<<gMSecond;
+            }else{
+                qDebug() << "00 :"<<gSecond<<":"<<gMSecond;
+            }
+        }
+    }
 }
 
 void MainWindow::on_upBtn_clicked()
@@ -258,4 +276,11 @@ void MainWindow::on_SpeedDownBtn_clicked()
 	if(m_timeSpace >= 800)
 		m_timeSpace = 800;
 	m_timer->start(m_timeSpace);
+}
+void MainWindow::on_actionOpenMusic_triggered()
+{
+    m_player = new QMediaPlayer;
+    m_player->setMedia(QUrl::fromLocalFile("H:/CloudMusic/zhishi.mp3"));
+    m_player->setVolume(30);
+    m_player->play();
 }
