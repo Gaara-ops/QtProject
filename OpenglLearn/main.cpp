@@ -14,6 +14,7 @@
 
 //全局的GLuint引用变量,来操作顶点缓冲器对象,绝大多数OpenGL对象都是通过GLuint类型的变量来引用的.
 GLuint VBO;
+GLuint gScaleLocation; //控制顶点的位置
 // 定义要读取的顶点着色器脚本和片断着色器脚本的文件名，作为文件读取路径
 const char* pVSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.vs";
 const char* pFSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.fs";
@@ -24,6 +25,19 @@ const char* pFSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader
 static void RenderSceneCB(){
     // 清空颜色缓存
     glClear(GL_COLOR_BUFFER_BIT);
+
+    /**
+      OpenGL提供了多个和glUniform1f类似的实例函数，命名形式为glUniform{1234}{if}。
+在这些函数中的第二个参数，你可以将浮点数（后缀是i）或者整型数（后缀是f）赋给不同
+维度（1D,2D,3D,4D）的vector向量中作为参数，当然也有别的版本函数采用其他的参数形式:
+vector向量的地址或者特殊的采用矩阵；
+第一个参数是我们通过glGetUniformLocation()函数获取的索引位置。
+      */
+    // 维护一个不断慢慢增大的静态浮点数
+    static float Scale = 0.0f;
+    Scale += 0.0002f;
+    // 将值传递给shader,注意sinf()函数的参数是弧度值而不是角度值
+    glUniform1f(gScaleLocation, sinf(Scale));
 
     // 开启顶点属性
     glEnableVertexAttribArray(0);
@@ -65,6 +79,8 @@ static void RenderSceneCB(){
 static void InitializeGlutCallbacks()
 {
     glutDisplayFunc(RenderSceneCB);
+    // 将渲染回调注册为全局闲置回调
+    glutIdleFunc(RenderSceneCB);
 }
 /**
  * 创建顶点缓冲器
@@ -207,6 +223,11 @@ OpenGL保存着由它产生的多数对象的引用计数，如果一个shader�
   */
     // 设置到管线声明中来使用上面成功建立的shader程序
     glUseProgram(ShaderProgram);
+
+    // 查询获取一致变量的位置,执行环境映射到shader着色器执行环境
+    gScaleLocation = glGetUniformLocation(ShaderProgram, "gScale");
+    // 检查错误
+    assert(gScaleLocation != 0xFFFFFFFF);
 }
 
 int main(int argc, char *argv[])
