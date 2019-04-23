@@ -14,6 +14,9 @@
 
 //全局的GLuint引用变量,来操作顶点缓冲器对象,绝大多数OpenGL对象都是通过GLuint类型的变量来引用的.
 GLuint VBO;
+// 索引缓冲对象的句柄
+GLuint IBO;
+
 GLuint gScaleLocation; //控制顶点的位置(缩放)
 // 平移变换一致变量的句柄引用
 GLuint gWorldLocation;
@@ -39,13 +42,13 @@ vector向量的地址或者特殊的采用矩阵；
     static float Scale = 0.0f;
     Scale += 0.0002f;
     // 将值传递给shader,注意sinf()函数的参数是弧度值而不是角度值
-    glUniform1f(gScaleLocation, 1.0);
+    glUniform1f(gScaleLocation, 0.5);
 
     // 4x4的平移变换矩阵
     Matrix4f World;
-    World.m[0][0] = 1.0f; World.m[0][1] = 0.0f; World.m[0][2] = 0.0f; World.m[0][3] = 0.0f;
+    World.m[0][0] = cosf(Scale); World.m[0][1] = 0.0f; World.m[0][2] =-sinf(Scale); World.m[0][3] = 0.0f;
     World.m[1][0] = 0.0f; World.m[1][1] = 1.0f; World.m[1][2] = 0.0f; World.m[1][3] = 0.0f;
-    World.m[2][0] = 0.0f; World.m[2][1] = 0.0f; World.m[2][2] = 1.0f; World.m[2][3] = 0.0f;
+    World.m[2][0] = sinf(Scale); World.m[2][1] = 0.0f; World.m[2][2] = cosf(Scale); World.m[2][3] = 0.0f;
     World.m[3][0] = 0.0f; World.m[3][1] = 0.0f; World.m[3][2] = 0.0f; World.m[3][3] = 1.0f;
     /**
 使用glUniform*函数将数据加载到shader一致变量中的例子。这个函数定义的可以加载4x4矩阵数据，
@@ -82,7 +85,27 @@ vector向量的地址或者特殊的采用矩阵；
       */
     // 告诉管线怎样解析bufer中的数据
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    ///索引绘制
+    // 每次在绘制之前绑定索引缓冲
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+    /**
+第一个参数是要渲染的图元的类型
+第二个参数是索引缓冲中用于产生图元的索引个数
+第三个参数是每一个索引值的数据类型,必须要告诉GPU单个索引值的大小，否则GPU无法知道如何
+解析索引缓冲区。索引值可用的类型主要有：GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT,
+GL_UNSIGNED_INT。如果索引的范围很小应该选择小的数据类型来节省空间，
+如果索引范围很大自然就要根据需要选择更大的数据类型
+最后一个参数告诉GPU从索引缓冲区起始位置到到第一个需要扫描的索引值得偏移byte数，这个在使用
+同一个索引缓冲来保存多个物体的索引时很有用，通过定义偏移量和索引个数可以告诉GPU去渲染
+哪一个物体，在我们的例子中我们从一开始扫描所以定义偏移量为0。
+注意最后一个参数的类型是GLvoid*，所以如果不是0的话必须要转换成那个参数类型。
+      */
+    // 索引绘制图形
+    glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+    ///end
 
+#if 0
+    ///顺序绘制
     /**
       这个指令才是GPU真正开始工作的地方
       第一个参数我们定义拓扑结构为每一个顶点只表示一个点;
@@ -91,7 +114,8 @@ vector向量的地址或者特殊的采用矩阵；
       */
     // 开始绘制几何图形(绘制一个点)
     //glDrawArrays(GL_POINTS, 0, 1);//绘制点
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_TRIANGLES, 0, 3);//glDrawArrays()属于顺序绘制
+#endif
 
     //  禁用顶点数据
     glDisableVertexAttribArray(0);
@@ -111,11 +135,11 @@ static void InitializeGlutCallbacks()
 static void CreateVertexBuffer()
 {
     // 创建含有一个顶点的顶点数组
-    Vector3f Vertices[3];
-    // 将点置于屏幕中央
+    Vector3f Vertices[4];
     Vertices[0] = Vector3f(-1.0f, -1.0f, 0.0f);
-    Vertices[1] = Vector3f(1.0f, -1.0f, 0.0f);
-    Vertices[2] = Vector3f(0.0f, 1.0f, 0.0f);
+    Vertices[1] = Vector3f(0.0f, -1.0f, 1.0f);
+    Vertices[2] = Vector3f(1.0f, -1.0f, 0.0f);
+    Vertices[3] = Vector3f(0.0f, 1.0f, 0.0f);
 
     /**
       glGen*前缀的函数来产生不同类型的对象。它们通常有两个参数：
@@ -145,6 +169,21 @@ static void CreateVertexBuffer()
       */
     // 绑定顶点数据
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
+}
+// 创建索引缓冲器
+static void CreateIndexBuffer()
+{
+    // 四个三角形面的顶点索引集
+    unsigned int Indices[] = { 0, 3, 1,
+                               1, 3, 2,
+                               2, 3, 0,
+                               0, 1, 2 };
+    // 创建缓冲区
+    glGenBuffers(1, &IBO);
+    // 绑定缓冲区
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+    // 添加缓冲区数据
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
 }
 
 // 使用shader文本编译shader对象，并绑定shader都想到着色器程序中
@@ -285,6 +324,7 @@ int main(int argc, char *argv[])
 
     // 创建顶点缓冲器
     CreateVertexBuffer();
+    CreateIndexBuffer();
     // 编译着色器
     CompileShaders();
 
