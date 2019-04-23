@@ -14,7 +14,9 @@
 
 //全局的GLuint引用变量,来操作顶点缓冲器对象,绝大多数OpenGL对象都是通过GLuint类型的变量来引用的.
 GLuint VBO;
-GLuint gScaleLocation; //控制顶点的位置
+GLuint gScaleLocation; //控制顶点的位置(缩放)
+// 平移变换一致变量的句柄引用
+GLuint gWorldLocation;
 // 定义要读取的顶点着色器脚本和片断着色器脚本的文件名，作为文件读取路径
 const char* pVSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.vs";
 const char* pFSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.fs";
@@ -37,7 +39,28 @@ vector向量的地址或者特殊的采用矩阵；
     static float Scale = 0.0f;
     Scale += 0.0002f;
     // 将值传递给shader,注意sinf()函数的参数是弧度值而不是角度值
-    glUniform1f(gScaleLocation, sinf(Scale));
+    glUniform1f(gScaleLocation, 1.0);
+
+    // 4x4的平移变换矩阵
+    Matrix4f World;
+    World.m[0][0] = 1.0f; World.m[0][1] = 0.0f; World.m[0][2] = 0.0f; World.m[0][3] = sinf(Scale);
+    World.m[1][0] = 0.0f; World.m[1][1] = 1.0f; World.m[1][2] = 0.0f; World.m[1][3] = 0.0f;
+    World.m[2][0] = 0.0f; World.m[2][1] = 0.0f; World.m[2][2] = 1.0f; World.m[2][3] = 0.0f;
+    World.m[3][0] = 0.0f; World.m[3][1] = 0.0f; World.m[3][2] = 0.0f; World.m[3][3] = 1.0f;
+    /**
+使用glUniform*函数将数据加载到shader一致变量中的例子。这个函数定义的可以加载4x4矩阵数据，
+还可以加载像2x2,3x3,3x2,2x4,4x2,3x4和4x3这样的矩阵。
+第一个参数是一致变量的位置（在shader编译后使用glGetUniformLocation()获取）；
+第二个参数指的是我们要更新的矩阵的个数，我们使用参数1来更新一个矩阵，但我们也可以使用这个
+函数在一次回调中更新多个矩阵；
+第三个参数通常会使新手误解，第三个参数指的是矩阵是行优先还是列优先的。
+行优先指的是矩阵是从顶部开始一行一行给出的，而列优先是从左边一列一列给出的。C/C++中默认是行优先的。
+也就是说当年你构建一个二维数组时，在内存中是一行一行存储的，顶部的行在更低的地址区
+第四个参数是内存中矩阵的起始地址。
+      */
+    // 将矩阵数据加载到shader中
+    glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, &World.m[0][0]);
+
 
     // 开启顶点属性
     glEnableVertexAttribArray(0);
@@ -228,6 +251,9 @@ OpenGL保存着由它产生的多数对象的引用计数，如果一个shader�
     gScaleLocation = glGetUniformLocation(ShaderProgram, "gScale");
     // 检查错误
     assert(gScaleLocation != 0xFFFFFFFF);
+
+    gWorldLocation = glGetUniformLocation(ShaderProgram, "gWorld");
+    assert(gWorldLocation != 0xFFFFFFFF);
 }
 
 int main(int argc, char *argv[])

@@ -8,4 +8,5 @@ SUBDIRS += \
     TxtReader \
     NetworkRequest \
     MyRayTracingLearn \
-    RayTraceWidget
+    RayTraceWidget \
+    OpenglLearn
