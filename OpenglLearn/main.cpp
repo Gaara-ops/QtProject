@@ -9,8 +9,10 @@
 #include "glm.hpp"
 #include "math3d.h"
 #include "opengl_util.h"
+#include "pipeline.h"
 //#include "ogldev_math_3d.h"
 //#include "ogldev_util.h"
+//#include "ogldev_pipeline.h"
 
 //全局的GLuint引用变量,来操作顶点缓冲器对象,绝大多数OpenGL对象都是通过GLuint类型的变量来引用的.
 GLuint VBO;
@@ -18,7 +20,7 @@ GLuint VBO;
 GLuint IBO;
 
 GLuint gScaleLocation; //控制顶点的位置(缩放)
-// 平移变换一致变量的句柄引用
+// 复合变换一致变量的句柄引用
 GLuint gWorldLocation;
 // 定义要读取的顶点着色器脚本和片断着色器脚本的文件名，作为文件读取路径
 const char* pVSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.vs";
@@ -43,7 +45,18 @@ vector向量的地址或者特殊的采用矩阵；
     Scale += 0.0002f;
     // 将值传递给shader,注意sinf()函数的参数是弧度值而不是角度值
     glUniform1f(gScaleLocation, 0.5);
+    // 实例化一个pipeline管线类对象，初始化配置好之后传递给shader
+    Pipeline p;
+    float scalexyz = 1.0f;//sinf(Scale * 0.1f);
+    float movexyz = 0.0f;
+    float rotexyz = sinf(Scale) * 90.0f;
+    p.Scale(scalexyz, scalexyz, scalexyz);
+    p.WorldPos(movexyz, 0.0f, 0.0f);
+    p.Rotate(0, rotexyz, 0);
+    glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, (const GLfloat*)p.GetWorldTrans());
 
+#if 0
+    //缩放,旋转变换
     // 4x4的平移变换矩阵
     Matrix4f World;
     World.m[0][0] = cosf(Scale); World.m[0][1] = 0.0f; World.m[0][2] =-sinf(Scale); World.m[0][3] = 0.0f;
@@ -63,7 +76,7 @@ vector向量的地址或者特殊的采用矩阵；
       */
     // 将矩阵数据加载到shader中
     glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, &World.m[0][0]);
-
+#endif
 
     // 开启顶点属性
     glEnableVertexAttribArray(0);

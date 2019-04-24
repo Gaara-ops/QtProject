@@ -15,7 +15,9 @@ CONFIG   -= app_bundle
 TEMPLATE = app
 
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    math3d.cpp \
+    pipeline.cpp
 
 freeglutDir_D = F:/opengl/freeglut-3.0.0/qt5.3/lib-debug
 freeglutDir   = F:/opengl/freeglut-3.0.0/qt5.3/lib-release
@@ -57,6 +59,7 @@ OTHER_FILES += \
 
 HEADERS += \
     math3d.h \
-    opengl_util.h
+    opengl_util.h \
+    pipeline.h
 
 

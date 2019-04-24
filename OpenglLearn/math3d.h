@@ -74,15 +74,43 @@ struct Vector3f
 
 
     Vector3f Cross(const Vector3f& v) const;
-
     Vector3f& Normalize();
 
-    void Rotate(float Angle, const Vector3f& Axis);
+    void Rotate(float Angle, const Vector3f& Axe);
 
     void Print() const
     {
         printf("(%.02f, %.02f, %.02f)", x, y, z);
     }
+};
+
+
+struct Quaternion
+{
+    float x, y, z, w;
+
+    Quaternion(float _x, float _y, float _z, float _w){
+        x = _x;
+        y = _y;
+        z = _z;
+        w = _w;
+    }
+
+    void Normalize(){
+        float Length = sqrtf(x * x + y * y + z * z + w * w);
+
+        x /= Length;
+        y /= Length;
+        z /= Length;
+        w /= Length;
+    }
+
+    Quaternion Conjugate(){
+        Quaternion ret(-x, -y, -z, w);
+        return ret;
+    }
+
+    Vector3f ToDegrees();
 };
 
 
@@ -160,10 +188,47 @@ public:
 
     Matrix4f& Inverse();
 
-    void InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ);
+    void InitScaleTransform(float ScaleX, float ScaleY, float ScaleZ){
+        m[0][0] = ScaleX; m[0][1] = 0.0f;   m[0][2] = 0.0f;   m[0][3] = 0.0f;
+        m[1][0] = 0.0f;   m[1][1] = ScaleY; m[1][2] = 0.0f;   m[1][3] = 0.0f;
+        m[2][0] = 0.0f;   m[2][1] = 0.0f;   m[2][2] = ScaleZ; m[2][3] = 0.0f;
+        m[3][0] = 0.0f;   m[3][1] = 0.0f;   m[3][2] = 0.0f;   m[3][3] = 1.0f;
+    }
+
     void InitRotateTransform(float RotateX, float RotateY, float RotateZ);
-    void InitTranslationTransform(float x, float y, float z);
+
+    void InitTranslationTransform(float x, float y, float z){
+        m[0][0] = 1.0f; m[0][1] = 0.0f; m[0][2] = 0.0f; m[0][3] = x;
+        m[1][0] = 0.0f; m[1][1] = 1.0f; m[1][2] = 0.0f; m[1][3] = y;
+        m[2][0] = 0.0f; m[2][1] = 0.0f; m[2][2] = 1.0f; m[2][3] = z;
+        m[3][0] = 0.0f; m[3][1] = 0.0f; m[3][2] = 0.0f; m[3][3] = 1.0f;
+    }
+
     void InitCameraTransform(const Vector3f& Target, const Vector3f& Up);
 };
+
+struct PersProjInfo
+{
+    float FOV;
+    float Width;
+    float Height;
+    float zNear;
+    float zFar;
+};
+
+
+struct OrthoProjInfo
+{
+    float r;        // right
+    float l;        // left
+    float b;        // bottom
+    float t;        // top
+    float n;        // z near
+    float f;        // z far
+};
+
+Quaternion operator*(const Quaternion& l, const Quaternion& r);
+
+Quaternion operator*(const Quaternion& q, const Vector3f& v);
 
 #endif // MATH3D_H
