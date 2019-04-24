@@ -14,6 +14,10 @@
 //#include "ogldev_util.h"
 //#include "ogldev_pipeline.h"
 
+// 屏幕宽高宏定义
+#define WINDOW_WIDTH 1024
+#define WINDOW_HEIGHT 768
+
 //全局的GLuint引用变量,来操作顶点缓冲器对象,绝大多数OpenGL对象都是通过GLuint类型的变量来引用的.
 GLuint VBO;
 // 索引缓冲对象的句柄
@@ -25,6 +29,9 @@ GLuint gWorldLocation;
 // 定义要读取的顶点着色器脚本和片断着色器脚本的文件名，作为文件读取路径
 const char* pVSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.vs";
 const char* pFSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.fs";
+
+// 透视变换配置参数数据结构
+PersProjInfo gPersProjInfo;
 
 /**
  * 渲染回调函数
@@ -44,16 +51,19 @@ vector向量的地址或者特殊的采用矩阵；
     static float Scale = 0.0f;
     Scale += 0.0002f;
     // 将值传递给shader,注意sinf()函数的参数是弧度值而不是角度值
-    glUniform1f(gScaleLocation, 0.5);
+    glUniform1f(gScaleLocation, 1);
     // 实例化一个pipeline管线类对象，初始化配置好之后传递给shader
     Pipeline p;
     float scalexyz = 1.0f;//sinf(Scale * 0.1f);
     float movexyz = 0.0f;
     float rotexyz = sinf(Scale) * 90.0f;
-    p.Scale(scalexyz, scalexyz, scalexyz);
-    p.WorldPos(movexyz, 0.0f, 0.0f);
+    //p.Scale(scalexyz, scalexyz, scalexyz);
+    p.WorldPos(0.0, 0.0f, 5.0f);
     p.Rotate(0, rotexyz, 0);
-    glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, (const GLfloat*)p.GetWorldTrans());
+    // 设置投影变换的参数
+    p.SetPerspectiveProj(gPersProjInfo);
+    glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, (const GLfloat*)p.GetWPTrans());
+    //glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, (const GLfloat*)p.GetWorldTrans());
 
 #if 0
     //缩放,旋转变换
@@ -148,11 +158,17 @@ static void InitializeGlutCallbacks()
 static void CreateVertexBuffer()
 {
     // 创建含有一个顶点的顶点数组
-    Vector3f Vertices[4];
+    /*Vector3f Vertices[4];
     Vertices[0] = Vector3f(-1.0f, -1.0f, 0.0f);
     Vertices[1] = Vector3f(0.0f, -1.0f, 1.0f);
     Vertices[2] = Vector3f(1.0f, -1.0f, 0.0f);
+    Vertices[3] = Vector3f(0.0f, 1.0f, 0.0f);*/
+    Vector3f Vertices[4];
+    Vertices[0] = Vector3f(-1.0f, -1.0f, 0.5773f);
+    Vertices[1] = Vector3f(0.0f, -1.0f, -1.15475f);
+    Vertices[2] = Vector3f(1.0f, -1.0f, 0.5773f);
     Vertices[3] = Vector3f(0.0f, 1.0f, 0.0f);
+
 
     /**
       glGen*前缀的函数来产生不同类型的对象。它们通常有两个参数：
@@ -340,6 +356,13 @@ int main(int argc, char *argv[])
     CreateIndexBuffer();
     // 编译着色器
     CompileShaders();
+
+    // 初始化透视变换配置参数
+    gPersProjInfo.FOV = 30.0f;
+    gPersProjInfo.Height = WINDOW_HEIGHT;
+    gPersProjInfo.Width = WINDOW_WIDTH;
+    gPersProjInfo.zNear = 1.0f;
+    gPersProjInfo.zFar = 100.0f;
 
     // 通知开始GLUT的内部循环
     glutMainLoop();

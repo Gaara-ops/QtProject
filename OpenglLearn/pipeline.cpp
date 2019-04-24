@@ -1,6 +1,17 @@
 #include "pipeline.h"
 
 
+const Matrix4f &Pipeline::GetWPTrans()
+{
+    Matrix4f PersProjTrans;
+
+    GetWorldTrans();
+    PersProjTrans.InitPersProjTransform(m_persProjInfo);
+
+    m_WPtransformation = PersProjTrans * m_Wtransformation;
+    return m_WPtransformation;
+}
+
 const Matrix4f &Pipeline::GetWorldTrans()
 {
     Matrix4f ScaleTrans, RotateTrans, TranslationTrans;

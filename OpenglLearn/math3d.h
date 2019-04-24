@@ -12,6 +12,25 @@
 #define ToRadian(x) (float)(((x) * M_PI / 180.0f))
 #define ToDegree(x) (float)(((x) * 180.0f / M_PI))
 
+struct PersProjInfo
+{
+    float FOV;
+    float Width;
+    float Height;
+    float zNear;
+    float zFar;
+};
+
+
+struct OrthoProjInfo
+{
+    float r;        // right
+    float l;        // left
+    float b;        // bottom
+    float t;        // top
+    float n;        // z near
+    float f;        // z far
+};
 
 struct Vector3f
 {
@@ -205,26 +224,7 @@ public:
     }
 
     void InitCameraTransform(const Vector3f& Target, const Vector3f& Up);
-};
-
-struct PersProjInfo
-{
-    float FOV;
-    float Width;
-    float Height;
-    float zNear;
-    float zFar;
-};
-
-
-struct OrthoProjInfo
-{
-    float r;        // right
-    float l;        // left
-    float b;        // bottom
-    float t;        // top
-    float n;        // z near
-    float f;        // z far
+    void InitPersProjTransform(const PersProjInfo& p);
 };
 
 Quaternion operator*(const Quaternion& l, const Quaternion& r);
