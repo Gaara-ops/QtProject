@@ -108,6 +108,15 @@ struct Vector3f
         return *this;
     }
 
+    Vector3f& operator*(float f)
+    {
+        x *= f;
+        y *= f;
+        z *= f;
+
+        return *this;
+    }
+
     operator const float*() const
     {
         return &(x);

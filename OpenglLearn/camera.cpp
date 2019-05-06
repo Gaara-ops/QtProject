@@ -1,5 +1,5 @@
 #include "camera.h"
-
+#include "GL/freeglut.h"
 
 const static float STEP_SCALE = 1.0f;
 const static float EDGE_STEP = 0.5f;
@@ -75,27 +75,27 @@ void Camera::Init()
 }
 
 
-bool Camera::OnKeyboard(OGLDEV_KEY Key)
+bool Camera::OnKeyboard(int Key)
 {
     bool Ret = false;
-/*
+
     switch (Key) {
 
-    case OGLDEV_KEY_UP:
+    case GLUT_KEY_UP:
         {
             m_pos += (m_target * STEP_SCALE);
             Ret = true;
         }
         break;
 
-    case OGLDEV_KEY_DOWN:
+    case GLUT_KEY_DOWN:
         {
             m_pos -= (m_target * STEP_SCALE);
             Ret = true;
         }
         break;
 
-    case OGLDEV_KEY_LEFT:
+    case GLUT_KEY_LEFT:
         {
             Vector3f Left = m_target.Cross(m_up);
             Left.Normalize();
@@ -105,7 +105,7 @@ bool Camera::OnKeyboard(OGLDEV_KEY Key)
         }
         break;
 
-    case OGLDEV_KEY_RIGHT:
+    case GLUT_KEY_RIGHT:
         {
             Vector3f Right = m_up.Cross(m_target);
             Right.Normalize();
@@ -115,18 +115,10 @@ bool Camera::OnKeyboard(OGLDEV_KEY Key)
         }
         break;
 
-    case OGLDEV_KEY_PAGE_UP:
-        m_pos.y += STEP_SCALE;
-        break;
-
-    case OGLDEV_KEY_PAGE_DOWN:
-        m_pos.y -= STEP_SCALE;
-        break;
-
     default:
         break;
     }
-*/
+
     return Ret;
 }
 

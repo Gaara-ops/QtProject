@@ -151,11 +151,22 @@ GL_UNSIGNED_INT。如果索引的范围很小应该选择小的数据类型来�
     // 交换前后缓存
     glutSwapBuffers();
 }
+
+// 传递键盘事件
+static void SpecialKeyboardCB(int Key, int x, int y)
+{
+    std::cout <<"key down:" << Key << std::endl;
+    pGameCamera->OnKeyboard(Key);
+}
+
+
 static void InitializeGlutCallbacks()
 {
     glutDisplayFunc(RenderSceneCB);
     // 将渲染回调注册为全局闲置回调
     glutIdleFunc(RenderSceneCB);
+    // 注册键盘事件
+    glutSpecialFunc(SpecialKeyboardCB);
 }
 /**
  * 创建顶点缓冲器

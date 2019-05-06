@@ -11,7 +11,7 @@ public:
 
     Camera(int WindowWidth, int WindowHeight, const Vector3f& Pos, const Vector3f& Target, const Vector3f& Up);
 
-    bool OnKeyboard(OGLDEV_KEY Key);
+    bool OnKeyboard(int Key);
 
     void OnMouse(int x, int y);
 
