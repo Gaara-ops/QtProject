@@ -10,6 +10,7 @@
 #include "math3d.h"
 #include "opengl_util.h"
 #include "pipeline.h"
+#include "camera.h"
 //#include "ogldev_math_3d.h"
 //#include "ogldev_util.h"
 //#include "ogldev_pipeline.h"
@@ -25,11 +26,12 @@ GLuint IBO;
 
 GLuint gScaleLocation; //控制顶点的位置(缩放)
 // 复合变换一致变量的句柄引用
-GLuint gWorldLocation;
+GLuint gWVPLocation;
 // 定义要读取的顶点着色器脚本和片断着色器脚本的文件名，作为文件读取路径
 const char* pVSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.vs";
 const char* pFSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.fs";
 
+Camera* pGameCamera = NULL;//相机控制
 // 透视变换配置参数数据结构
 PersProjInfo gPersProjInfo;
 
@@ -58,12 +60,15 @@ vector向量的地址或者特殊的采用矩阵；
     float movexyz = 0.0f;
     float rotexyz = sinf(Scale) * 90.0f;
     //p.Scale(scalexyz, scalexyz, scalexyz);
-    p.WorldPos(0.0, 0.0f, 5.0f);
+    p.WorldPos(0.0, 0.0f, 3.0f);
     p.Rotate(0, rotexyz, 0);
+
+    p.SetCamera(*pGameCamera);
+
     // 设置投影变换的参数
     p.SetPerspectiveProj(gPersProjInfo);
-    glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, (const GLfloat*)p.GetWPTrans());
-    //glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, (const GLfloat*)p.GetWorldTrans());
+    glUniformMatrix4fv(gWVPLocation, 1, GL_TRUE, (const GLfloat*)p.GetWVPTrans());
+    //glUniformMatrix4fv(gWVPLocation, 1, GL_TRUE, (const GLfloat*)p.GetWorldTrans());
 
 #if 0
     //缩放,旋转变换
@@ -320,8 +325,8 @@ OpenGL保存着由它产生的多数对象的引用计数，如果一个shader�
     // 检查错误
     assert(gScaleLocation != 0xFFFFFFFF);
 
-    gWorldLocation = glGetUniformLocation(ShaderProgram, "gWorld");
-    assert(gWorldLocation != 0xFFFFFFFF);
+    gWVPLocation = glGetUniformLocation(ShaderProgram, "gWVP");
+    assert(gWVPLocation != 0xFFFFFFFF);
 }
 
 int main(int argc, char *argv[])
@@ -339,6 +344,12 @@ int main(int argc, char *argv[])
 
     // 开始渲染
     InitializeGlutCallbacks();
+
+    // 相机变换
+    Vector3f CameraPos(0.0f, 0.0f, -3.0f);
+    Vector3f CameraTarget(0.0f, 0.0f, 2.0f);
+    Vector3f CameraUp(0.0f, 1.0f, 0.0f);
+    pGameCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT);
 
     // 检查GLEW是否就绪，必须要在GLUT初始化之后
     GLenum res = glewInit();
@@ -358,7 +369,7 @@ int main(int argc, char *argv[])
     CompileShaders();
 
     // 初始化透视变换配置参数
-    gPersProjInfo.FOV = 30.0f;
+    gPersProjInfo.FOV = 60.0f;
     gPersProjInfo.Height = WINDOW_HEIGHT;
     gPersProjInfo.Width = WINDOW_WIDTH;
     gPersProjInfo.zNear = 1.0f;
