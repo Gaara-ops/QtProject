@@ -39,6 +39,8 @@ PersProjInfo gPersProjInfo;
  * 渲染回调函数
  */
 static void RenderSceneCB(){
+    pGameCamera->OnRender();
+
     // 清空颜色缓存
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -51,7 +53,7 @@ vector向量的地址或者特殊的采用矩阵；
       */
     // 维护一个不断慢慢增大的静态浮点数
     static float Scale = 0.0f;
-    Scale += 0.0002f;
+    //Scale += 0.0002f;
     // 将值传递给shader,注意sinf()函数的参数是弧度值而不是角度值
     glUniform1f(gScaleLocation, 1);
     // 实例化一个pipeline管线类对象，初始化配置好之后传递给shader
@@ -159,14 +161,29 @@ static void SpecialKeyboardCB(int Key, int x, int y)
     pGameCamera->OnKeyboard(Key);
 }
 
+static void KeyboardCB(unsigned char Key, int x, int y)
+{
+    switch (Key) {
+        case 'q':
+            glutLeaveMainLoop();
+    }
+}
+
+static void PassiveMouseCB(int x, int y)
+{
+    pGameCamera->OnMouse(x, y);
+}
+
 
 static void InitializeGlutCallbacks()
 {
     glutDisplayFunc(RenderSceneCB);
     // 将渲染回调注册为全局闲置回调
     glutIdleFunc(RenderSceneCB);
-    // 注册键盘事件
+    // 用于监听特殊键盘事件
     glutSpecialFunc(SpecialKeyboardCB);
+    glutPassiveMotionFunc(PassiveMouseCB);//用于监听鼠标事件
+    glutKeyboardFunc(KeyboardCB); //监听常规键盘按下的事件
 }
 /**
  * 创建顶点缓冲器
@@ -352,6 +369,9 @@ int main(int argc, char *argv[])
     glutInitWindowSize(480, 320);      // 窗口尺寸
     glutInitWindowPosition(100, 100);  // 窗口位置
     glutCreateWindow("Tutorial 02");   // 窗口标题
+
+    glutGameModeString("1024x768@32");
+    glutEnterGameMode();
 
     // 开始渲染
     InitializeGlutCallbacks();

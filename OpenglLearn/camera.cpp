@@ -2,7 +2,7 @@
 #include "GL/freeglut.h"
 
 const static float STEP_SCALE = 1.0f;
-const static float EDGE_STEP = 0.5f;
+const static float EDGE_STEP = 0.1f;
 const static int MARGIN = 10;
 
 Camera::Camera(int WindowWidth, int WindowHeight)
@@ -38,7 +38,7 @@ void Camera::Init()
 {
     Vector3f HTarget(m_target.x, 0.0, m_target.z);
     HTarget.Normalize();
-
+    //检查这个HTarget向量在哪个四分之一圆区域内
     if (HTarget.z >= 0.0f)
     {
         if (HTarget.x >= 0.0f)
@@ -63,15 +63,15 @@ void Camera::Init()
     }
 
     m_AngleV = -ToDegree(asin(m_target.y));
-
+    //标记鼠标是否指向了屏幕的其中一个边缘，当指向边缘后我们会在相应的方向上进行自动的转向旋转
     m_OnUpperEdge = false;
     m_OnLowerEdge = false;
     m_OnLeftEdge  = false;
     m_OnRightEdge = false;
     m_mousePos.x  = m_windowWidth / 2;
     m_mousePos.y  = m_windowHeight / 2;
-
-   // glutWarpPointer(m_mousePos.x, m_mousePos.y);
+    //移动鼠标到屏幕中央
+    glutWarpPointer(m_mousePos.x, m_mousePos.y);
 }
 
 
@@ -131,6 +131,11 @@ void Camera::OnMouse(int x, int y)
     m_mousePos.x = x;
     m_mousePos.y = y;
 
+    /**
+    按比例缩小后更新改变当前水平方向和竖直方向上的倾角。这里使用了一个效果比较好的缩放比例
+    值20.0，但是在不同的电脑可能要调整不同的值是旋转的速度看上去合适(改变鼠标灵敏度相当于).
+    之后的教程我们会将帧率这个参数加入计算来更好的改善这个旋转灵敏度
+      */
     m_AngleH += (float)DeltaX / 20.0f;
     m_AngleV += (float)DeltaY / 20.0f;
 
@@ -210,6 +215,7 @@ void Camera::Update()
     Vector3f Haxis = Vaxis.Cross(View);
     Haxis.Normalize();
     View.Rotate(m_AngleV, Haxis);
+    View.Normalize();
 
     m_target = View;
     m_target.Normalize();

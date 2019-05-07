@@ -140,3 +140,17 @@ glutSpecialFunc()。当“专用功能按键”按下时触发。
 专用按键主要包括：功能键、方向键，以及PAGE-UP/PAGE-DOWN/HOME/END/INSERT这些按键
 
 glutKeyboardFunc()。获取常规按键（字母键和数字键）的触发事件
+
+
+14.鼠标控制
+
+
+
+
+
+
+
+
+
+
+
