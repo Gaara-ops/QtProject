@@ -4,9 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core
+QT       += core gui
 
-QT       -= gui
 
 TARGET = OpenglLearn
 CONFIG   += console
@@ -18,7 +17,8 @@ TEMPLATE = app
 SOURCES += main.cpp \
     math3d.cpp \
     pipeline.cpp \
-    camera.cpp
+    camera.cpp \
+    texture.cpp
 
 freeglutDir_D = F:/opengl/freeglut-3.0.0/qt5.3/lib-debug
 freeglutDir   = F:/opengl/freeglut-3.0.0/qt5.3/lib-release
@@ -63,6 +63,7 @@ HEADERS += \
     opengl_util.h \
     pipeline.h \
     camera.h \
-    Keys.h
+    Keys.h \
+    texture.h
 
 

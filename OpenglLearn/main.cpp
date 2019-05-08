@@ -11,6 +11,7 @@
 #include "opengl_util.h"
 #include "pipeline.h"
 #include "camera.h"
+#include "texture.h"
 //#include "ogldev_math_3d.h"
 //#include "ogldev_util.h"
 //#include "ogldev_pipeline.h"
@@ -18,6 +19,20 @@
 // 屏幕宽高宏定义
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
+
+struct Vertex
+{
+    Vector3f m_pos;
+    Vector2f m_tex;
+
+    Vertex() {}
+
+    Vertex(Vector3f pos, Vector2f tex)
+    {
+        m_pos = pos;
+        m_tex = tex;
+    }
+};
 
 //全局的GLuint引用变量,来操作顶点缓冲器对象,绝大多数OpenGL对象都是通过GLuint类型的变量来引用的.
 GLuint VBO;
@@ -30,10 +45,14 @@ GLuint gWVPLocation;
 // 定义要读取的顶点着色器脚本和片断着色器脚本的文件名，作为文件读取路径
 const char* pVSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.vs";
 const char* pFSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.fs";
+std::string textureName = "F:/opengl/ogldev-source/Content/test.png";
 
 Camera* pGameCamera = NULL;//相机控制
 // 透视变换配置参数数据结构
 PersProjInfo gPersProjInfo;
+
+GLuint gSampler;
+Texture* pTexture = NULL;//对纹理进行操作
 
 /**
  * 渲染回调函数
@@ -53,7 +72,7 @@ vector向量的地址或者特殊的采用矩阵；
       */
     // 维护一个不断慢慢增大的静态浮点数
     static float Scale = 0.0f;
-    //Scale += 0.0002f;
+    Scale += 0.0002f;
     // 将值传递给shader,注意sinf()函数的参数是弧度值而不是角度值
     glUniform1f(gScaleLocation, 1);
     // 实例化一个pipeline管线类对象，初始化配置好之后传递给shader
@@ -97,6 +116,7 @@ vector向量的地址或者特殊的采用矩阵；
 
     // 开启顶点属性
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);//启用纹理属性
     // 绑定GL_ARRAY_BUFFER缓冲器
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     /**
@@ -114,10 +134,14 @@ vector向量的地址或者特殊的采用矩阵；
 在有位置数据和法向量数据的结构中，位置的偏移量为0，而法向量的偏移量则为12。
       */
     // 告诉管线怎样解析bufer中的数据
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,  sizeof(Vertex), 0);
+    //定义顶点缓冲器中纹理坐标的位置
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
     ///索引绘制
     // 每次在绘制之前绑定索引缓冲
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
+
+    pTexture->Bind(GL_TEXTURE0);
     /**
 第一个参数是要渲染的图元的类型
 第二个参数是索引缓冲中用于产生图元的索引个数
@@ -149,6 +173,7 @@ GL_UNSIGNED_INT。如果索引的范围很小应该选择小的数据类型来�
 
     //  禁用顶点数据
     glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
 
     // 交换前后缓存
     glutSwapBuffers();
@@ -171,7 +196,7 @@ static void KeyboardCB(unsigned char Key, int x, int y)
 
 static void PassiveMouseCB(int x, int y)
 {
-    pGameCamera->OnMouse(x, y);
+    //pGameCamera->OnMouse(x, y);
 }
 
 
@@ -192,15 +217,14 @@ static void CreateVertexBuffer()
 {
     // 创建含有一个顶点的顶点数组
     /*Vector3f Vertices[4];
-    Vertices[0] = Vector3f(-1.0f, -1.0f, 0.0f);
-    Vertices[1] = Vector3f(0.0f, -1.0f, 1.0f);
-    Vertices[2] = Vector3f(1.0f, -1.0f, 0.0f);
-    Vertices[3] = Vector3f(0.0f, 1.0f, 0.0f);*/
-    Vector3f Vertices[4];
     Vertices[0] = Vector3f(-1.0f, -1.0f, 0.5773f);
     Vertices[1] = Vector3f(0.0f, -1.0f, -1.15475f);
     Vertices[2] = Vector3f(1.0f, -1.0f, 0.5773f);
-    Vertices[3] = Vector3f(0.0f, 1.0f, 0.0f);
+    Vertices[3] = Vector3f(0.0f, 1.0f, 0.0f);*/
+    Vertex Vertices[4] = { Vertex(Vector3f(-1.0f, -1.0f, 0.5773f), Vector2f(0.0f, 0.0f)),
+                           Vertex(Vector3f(0.0f, -1.0f, -1.15475f), Vector2f(1.0f, 0.0f)),
+                           Vertex(Vector3f(1.0f, -1.0f, 0.5773f),  Vector2f(1.0f, 1.0f)),
+                           Vertex(Vector3f(0.0f, 1.0f, 0.0f),      Vector2f(0.0f, 1.0f)) };
 
 
     /**
@@ -355,6 +379,9 @@ OpenGL保存着由它产生的多数对象的引用计数，如果一个shader�
 
     gWVPLocation = glGetUniformLocation(ShaderProgram, "gWVP");
     assert(gWVPLocation != 0xFFFFFFFF);
+
+    gSampler = glGetUniformLocation(ShaderProgram, "gSampler");
+    assert(gSampler != 0xFFFFFFFF);
 }
 
 int main(int argc, char *argv[])
@@ -370,16 +397,13 @@ int main(int argc, char *argv[])
     glutInitWindowPosition(100, 100);  // 窗口位置
     glutCreateWindow("Tutorial 02");   // 窗口标题
 
-    glutGameModeString("1024x768@32");
-    glutEnterGameMode();
+    //glutGameModeString("1024x768@32");
+    //glutEnterGameMode();//进入游戏模式
 
     // 开始渲染
     InitializeGlutCallbacks();
 
     // 相机变换
-    Vector3f CameraPos(0.0f, 0.0f, -3.0f);
-    Vector3f CameraTarget(0.0f, 0.0f, 2.0f);
-    Vector3f CameraUp(0.0f, 1.0f, 0.0f);
     pGameCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT);
 
     // 检查GLEW是否就绪，必须要在GLUT初始化之后
@@ -392,12 +416,27 @@ int main(int argc, char *argv[])
 
     // 缓存清空后的颜色值
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    //glFrontFace()函数告诉OpenGL三角形的顶点是按照顺时针顺序定义的
+    glFrontFace(GL_CW);
+    //glCullFace()告诉GPU剔除三角形的背面
+    glCullFace(GL_BACK);
+    //开启面剔除本身（默认是关闭的）
+    glEnable(GL_CULL_FACE);
 
     // 创建顶点缓冲器
     CreateVertexBuffer();
     CreateIndexBuffer();
     // 编译着色器
     CompileShaders();
+    //将要使用的纹理单元的索引放到shader中的取样器一致变量里
+    glUniform1i(gSampler, 0);
+
+    //创建纹理对象,1.纹理目标类型  2.文件名
+    pTexture = new Texture(GL_TEXTURE_2D, textureName);
+    //加载纹理
+    if (!pTexture->Load()) {
+        return 1;
+    }
 
     // 初始化透视变换配置参数
     gPersProjInfo.FOV = 60.0f;
