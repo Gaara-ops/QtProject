@@ -1,8 +1,6 @@
 #ifndef KEYS_H
 #define KEYS_H
 
-
-
 enum OGLDEV_KEY
 {
     OGLDEV_KEY_SPACE =             32,

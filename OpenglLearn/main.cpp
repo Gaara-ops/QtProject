@@ -8,13 +8,14 @@
 #include "GL/freeglut.h"
 #include "glm.hpp"
 #include "math3d.h"
-#include "opengl_util.h"
 #include "pipeline.h"
 #include "camera.h"
 #include "texture.h"
-//#include "ogldev_math_3d.h"
-//#include "ogldev_util.h"
-//#include "ogldev_pipeline.h"
+#include "technique.h"
+#include "glut_backend.h"
+#include "icallback.h"
+#include "openglapp.h"
+#include "lighting_technique.h"
 
 // 屏幕宽高宏定义
 #define WINDOW_WIDTH 1024
@@ -34,422 +35,231 @@ struct Vertex
     }
 };
 
-//全局的GLuint引用变量,来操作顶点缓冲器对象,绝大多数OpenGL对象都是通过GLuint类型的变量来引用的.
-GLuint VBO;
-// 索引缓冲对象的句柄
-GLuint IBO;
-
-GLuint gScaleLocation; //控制顶点的位置(缩放)
-// 复合变换一致变量的句柄引用
-GLuint gWVPLocation;
-// 定义要读取的顶点着色器脚本和片断着色器脚本的文件名，作为文件读取路径
-const char* pVSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.vs";
-const char* pFSFileName = "E:/workspace/MyQtProject/QtProject/OpenglLearn/shader.fs";
-std::string textureName = "F:/opengl/ogldev-source/Content/test.png";
-
-Camera* pGameCamera = NULL;//相机控制
-// 透视变换配置参数数据结构
-PersProjInfo gPersProjInfo;
-
-GLuint gSampler;
-Texture* pTexture = NULL;//对纹理进行操作
-
-/**
- * 渲染回调函数
- */
-static void RenderSceneCB(){
-    pGameCamera->OnRender();
-
-    // 清空颜色缓存
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    /**
-      OpenGL提供了多个和glUniform1f类似的实例函数，命名形式为glUniform{1234}{if}。
-在这些函数中的第二个参数，你可以将浮点数（后缀是i）或者整型数（后缀是f）赋给不同
-维度（1D,2D,3D,4D）的vector向量中作为参数，当然也有别的版本函数采用其他的参数形式:
-vector向量的地址或者特殊的采用矩阵；
-第一个参数是我们通过glGetUniformLocation()函数获取的索引位置。
-      */
-    // 维护一个不断慢慢增大的静态浮点数
-    static float Scale = 0.0f;
-    Scale += 0.0002f;
-    // 将值传递给shader,注意sinf()函数的参数是弧度值而不是角度值
-    glUniform1f(gScaleLocation, 1);
-    // 实例化一个pipeline管线类对象，初始化配置好之后传递给shader
-    Pipeline p;
-    float scalexyz = 1.0f;//sinf(Scale * 0.1f);
-    float movexyz = 0.0f;
-    float rotexyz = sinf(Scale) * 90.0f;
-    //p.Scale(scalexyz, scalexyz, scalexyz);
-    p.WorldPos(0.0, 0.0f, 3.0f);
-    p.Rotate(0, rotexyz, 0);
-
-    p.SetCamera(*pGameCamera);
-
-    // 设置投影变换的参数
-    p.SetPerspectiveProj(gPersProjInfo);
-    glUniformMatrix4fv(gWVPLocation, 1, GL_TRUE, (const GLfloat*)p.GetWVPTrans());
-    //glUniformMatrix4fv(gWVPLocation, 1, GL_TRUE, (const GLfloat*)p.GetWorldTrans());
-
-#if 0
-    //缩放,旋转变换
-    // 4x4的平移变换矩阵
-    Matrix4f World;
-    World.m[0][0] = cosf(Scale); World.m[0][1] = 0.0f; World.m[0][2] =-sinf(Scale); World.m[0][3] = 0.0f;
-    World.m[1][0] = 0.0f; World.m[1][1] = 1.0f; World.m[1][2] = 0.0f; World.m[1][3] = 0.0f;
-    World.m[2][0] = sinf(Scale); World.m[2][1] = 0.0f; World.m[2][2] = cosf(Scale); World.m[2][3] = 0.0f;
-    World.m[3][0] = 0.0f; World.m[3][1] = 0.0f; World.m[3][2] = 0.0f; World.m[3][3] = 1.0f;
-    /**
-使用glUniform*函数将数据加载到shader一致变量中的例子。这个函数定义的可以加载4x4矩阵数据，
-还可以加载像2x2,3x3,3x2,2x4,4x2,3x4和4x3这样的矩阵。
-第一个参数是一致变量的位置（在shader编译后使用glGetUniformLocation()获取）；
-第二个参数指的是我们要更新的矩阵的个数，我们使用参数1来更新一个矩阵，但我们也可以使用这个
-函数在一次回调中更新多个矩阵；
-第三个参数通常会使新手误解，第三个参数指的是矩阵是行优先还是列优先的。
-行优先指的是矩阵是从顶部开始一行一行给出的，而列优先是从左边一列一列给出的。C/C++中默认是行优先的。
-也就是说当年你构建一个二维数组时，在内存中是一行一行存储的，顶部的行在更低的地址区
-第四个参数是内存中矩阵的起始地址。
-      */
-    // 将矩阵数据加载到shader中
-    glUniformMatrix4fv(gWorldLocation, 1, GL_TRUE, &World.m[0][0]);
-#endif
-
-    // 开启顶点属性
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);//启用纹理属性
-    // 绑定GL_ARRAY_BUFFER缓冲器
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    /**
-第1个参定义了属性的索引，再这个例子中我们知道这个索引默认是0，
-但是当我们开始使用shader着色器的时候，我们既要明确的设置着色器中的属性索引同时也要检索它；
-第2个参数指的是属性中的元素个数（3个表示的是：X,Y,Z坐标）；
-第3个参数指的是每个元素的数据类型；
-第4个参数指明我们是否想让我们的属性在被管线使用之前被单位化，
-我们这个例子中希望我们的数据保持不变的被传送；
-第5个参数（称作’stride‘）指的是缓冲中那个属性的两个实例之间的比特数距离。
-当只有一个属性（例如：buffer只含有一个顶点的位置数据）并且数据被紧密排布的时候将该参数值设置为0。
-如果我们有一个包含位置和法向量（都是有三个浮点数的vector向量，一共6个浮点数）
-两个属性的数据结构的数组的时候，我们将设置参数值为这个数据结构的比特大小（6*4=24）；
-最后一个参数在前一个例子中非常有用。我们需要在管线发现我们的属性的地方定义数据结构中的内存偏移值。
-在有位置数据和法向量数据的结构中，位置的偏移量为0，而法向量的偏移量则为12。
-      */
-    // 告诉管线怎样解析bufer中的数据
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,  sizeof(Vertex), 0);
-    //定义顶点缓冲器中纹理坐标的位置
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
-    ///索引绘制
-    // 每次在绘制之前绑定索引缓冲
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-
-    pTexture->Bind(GL_TEXTURE0);
-    /**
-第一个参数是要渲染的图元的类型
-第二个参数是索引缓冲中用于产生图元的索引个数
-第三个参数是每一个索引值的数据类型,必须要告诉GPU单个索引值的大小，否则GPU无法知道如何
-解析索引缓冲区。索引值可用的类型主要有：GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT,
-GL_UNSIGNED_INT。如果索引的范围很小应该选择小的数据类型来节省空间，
-如果索引范围很大自然就要根据需要选择更大的数据类型
-最后一个参数告诉GPU从索引缓冲区起始位置到到第一个需要扫描的索引值得偏移byte数，这个在使用
-同一个索引缓冲来保存多个物体的索引时很有用，通过定义偏移量和索引个数可以告诉GPU去渲染
-哪一个物体，在我们的例子中我们从一开始扫描所以定义偏移量为0。
-注意最后一个参数的类型是GLvoid*，所以如果不是0的话必须要转换成那个参数类型。
-      */
-    // 索引绘制图形
-    glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
-    ///end
-
-#if 0
-    ///顺序绘制
-    /**
-      这个指令才是GPU真正开始工作的地方
-      第一个参数我们定义拓扑结构为每一个顶点只表示一个点;
-      下一个参数是第一个要绘制的顶点的索引
-      最后一个参数是要绘制的顶点数
-      */
-    // 开始绘制几何图形(绘制一个点)
-    //glDrawArrays(GL_POINTS, 0, 1);//绘制点
-    glDrawArrays(GL_TRIANGLES, 0, 3);//glDrawArrays()属于顺序绘制
-#endif
-
-    //  禁用顶点数据
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-
-    // 交换前后缓存
-    glutSwapBuffers();
-}
-
-// 传递键盘事件
-static void SpecialKeyboardCB(int Key, int x, int y)
+class HelloGL : public ICallbacks,public OpenglApp
 {
-    std::cout <<"key down:" << Key << std::endl;
-    pGameCamera->OnKeyboard(Key);
-}
-
-static void KeyboardCB(unsigned char Key, int x, int y)
-{
-    switch (Key) {
-        case 'q':
-            glutLeaveMainLoop();
+public:
+    HelloGL(){
+        m_pGameCamera = NULL;
+        m_pTexture = NULL;
+        m_pEffect = NULL;
+        m_scale = 0.0f;
+        //平行光设置
+        m_directionalLight.Color = Vector3f(1.0f, 1.0f, 1.0f);
+        m_directionalLight.AmbientIntensity = 0.5f;
+        //透视变换参数设置
+        m_persProjInfo.FOV = 60.0f;
+        m_persProjInfo.Height = WINDOW_HEIGHT;
+        m_persProjInfo.Width = WINDOW_WIDTH;
+        m_persProjInfo.zNear = 1.0f;
+        m_persProjInfo.zFar = 100.0f;
     }
-}
+    ~HelloGL(){
+        delete m_pEffect;
+        delete m_pGameCamera;
+        delete m_pTexture;
+    }
+    bool Init()
+    {
+        m_pGameCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-static void PassiveMouseCB(int x, int y)
-{
-    //pGameCamera->OnMouse(x, y);
-}
+        CreateVertexBuffer();//创建顶点数据
+        CreateIndexBuffer();//创建索引数据
 
+        m_pEffect = new LightingTechnique();//管理着色器
+        if (!m_pEffect->Init())
+        {
+            return false;
+        }
+        m_pEffect->Enable();
+        m_pEffect->SetTextureUnit(0);//设置纹理单元索引
 
-static void InitializeGlutCallbacks()
-{
-    glutDisplayFunc(RenderSceneCB);
-    // 将渲染回调注册为全局闲置回调
-    glutIdleFunc(RenderSceneCB);
-    // 用于监听特殊键盘事件
-    glutSpecialFunc(SpecialKeyboardCB);
-    glutPassiveMotionFunc(PassiveMouseCB);//用于监听鼠标事件
-    glutKeyboardFunc(KeyboardCB); //监听常规键盘按下的事件
-}
-/**
- * 创建顶点缓冲器
- */
-static void CreateVertexBuffer()
-{
-    // 创建含有一个顶点的顶点数组
-    /*Vector3f Vertices[4];
-    Vertices[0] = Vector3f(-1.0f, -1.0f, 0.5773f);
-    Vertices[1] = Vector3f(0.0f, -1.0f, -1.15475f);
-    Vertices[2] = Vector3f(1.0f, -1.0f, 0.5773f);
-    Vertices[3] = Vector3f(0.0f, 1.0f, 0.0f);*/
-    Vertex Vertices[4] = { Vertex(Vector3f(-1.0f, -1.0f, 0.5773f), Vector2f(0.0f, 0.0f)),
-                           Vertex(Vector3f(0.0f, -1.0f, -1.15475f), Vector2f(1.0f, 0.0f)),
-                           Vertex(Vector3f(1.0f, -1.0f, 0.5773f),  Vector2f(1.0f, 1.0f)),
-                           Vertex(Vector3f(0.0f, 1.0f, 0.0f),      Vector2f(0.0f, 1.0f)) };
-
-
-    /**
-      glGen*前缀的函数来产生不同类型的对象。它们通常有两个参数：
-    第一个参数用来定义你想创建的对象的数量;
-    第二个参数是一个GLuint变量的数组的地址，来存储分配给你的引用变量handles
-        （要确保这个数组足够大来处理你的请求！）
-    以后对这个函数的调用将不会重复产生相同的handle对象，
-    除非你先使用glDeleteBuffers删除他们
-      */
-    // 创建缓冲器
-    glGenBuffers(1, &VBO);
-    /**
-      将handle与一个目标的名称进行绑定，然后在该目标上执行命令.
-    这些指令只会在与handle绑定的目标上生效直到另外有其他的对象
-    跟这个handle绑定或者这个handle被置空。
-    目标名GL_ARRAY_BUFFER意思是这个buffer将存储一个顶点的数组。
-    另外一个是GL_ELEMENT_ARRAY_BUFFER,意思是这个buffer存储的是另一个buffer中顶点的标记
-      */
-    // 绑定GL_ARRAY_BUFFER缓冲器
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    /**
-      往里面添加数据。这个回调函数取得我们之前绑定的目标名参数GL_ARRAY_BUFFER，
-    还有数据的比特数参数，顶点数组的地址，还有一个表示这个数据模式的标志变量。
-    因为我们不会去改变这个buffer的内容所以这里用了GL_STATIC_DRAW标志，
-    相反的标志是GL_DYNAMIIC_DRAW, 这个只是给OpenGL的一个提示来给一些觉得合理的标志量使用，
-    驱动程序可以通过它来进行启发式的优化（比如：内存中哪个位置最合适存储这个buffer缓冲）
-      */
-    // 绑定顶点数据
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
-}
-// 创建索引缓冲器
-static void CreateIndexBuffer()
-{
-    // 四个三角形面的顶点索引集
-    unsigned int Indices[] = { 0, 3, 1,
-                               1, 3, 2,
-                               2, 3, 0,
-                               0, 1, 2 };
-    // 创建缓冲区
-    glGenBuffers(1, &IBO);
-    // 绑定缓冲区
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
-    // 添加缓冲区数据
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
-}
-
-// 使用shader文本编译shader对象，并绑定shader都想到着色器程序中
-static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
-{
-    // 根据shader类型参数定义两个shader对象
-    GLuint ShaderObj = glCreateShader(ShaderType);
-    // 检查是否定义成功
-    if (ShaderObj == 0) {
-        fprintf(stderr, "Error creating shader type %d\n", ShaderType);
-        exit(0);
+        std::string textureName = "F:/opengl/ogldev-source/Content/test.png";
+        m_pTexture = new Texture(GL_TEXTURE_2D, textureName);//管理纹理
+        if (!m_pTexture->Load()) {
+            return false;
+        }
+        return true;
     }
 
-    // 定义shader的代码源
-    const GLchar* p[1];
-    p[0] = pShaderText;
-    GLint Lengths[1];
-    Lengths[0]= strlen(pShaderText);
+    void Run()
+    {
+        GLUTBackendRun(this);
+    }
+    //渲染回调函数
+    virtual void RenderSceneCB()
+    {
+        m_pGameCamera->OnRender();
+
+        glClear(GL_COLOR_BUFFER_BIT);// 清空颜色缓存
+
+        m_scale += 0.0002f;
+        // 实例化一个pipeline管线类对象，初始化配置好之后传递给shader
+        Pipeline p;
+        p.Rotate(0.0f, m_scale, 0.0f);
+        p.WorldPos(0.0f, 0.0f, 3.0f);
+        p.SetCamera(m_pGameCamera->GetPos(), m_pGameCamera->GetTarget(), m_pGameCamera->GetUp());
+        p.SetPerspectiveProj(m_persProjInfo);
+        m_pEffect->SetWVP(p.GetWVPTrans());
+        m_pEffect->SetDirectionalLight(m_directionalLight);
+
+        glEnableVertexAttribArray(0);//开启顶点属性
+        glEnableVertexAttribArray(1);//启用纹理属性
+        glBindBuffer(GL_ARRAY_BUFFER, m_VBO);// 绑定GL_ARRAY_BUFFER缓冲器
+        /**
+    第1个参定义了属性的索引，再这个例子中我们知道这个索引默认是0，
+    但是当我们开始使用shader着色器的时候，我们既要明确的设置着色器中的属性索引同时也要检索它；
+    第2个参数指的是属性中的元素个数（3个表示的是：X,Y,Z坐标）；
+    第3个参数指的是每个元素的数据类型；
+    第4个参数指明我们是否想让我们的属性在被管线使用之前被单位化，
+    我们这个例子中希望我们的数据保持不变的被传送；
+    第5个参数（称作’stride‘）指的是缓冲中那个属性的两个实例之间的比特数距离。
+    当只有一个属性（例如：buffer只含有一个顶点的位置数据）并且数据被紧密排布的时候将该参数值设置为0。
+    如果我们有一个包含位置和法向量（都是有三个浮点数的vector向量，一共6个浮点数）
+    两个属性的数据结构的数组的时候，我们将设置参数值为这个数据结构的比特大小（6*4=24）；
+    最后一个参数在前一个例子中非常有用。我们需要在管线发现我们的属性的地方定义数据结构中的内存偏移值。
+    在有位置数据和法向量数据的结构中，位置的偏移量为0，而法向量的偏移量则为12。
+          */
+        // 告诉管线怎样解析bufer中的数据
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+        //定义顶点缓冲器中纹理坐标的位置
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
+        ///索引绘制
+        // 每次在绘制之前绑定索引缓冲
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
+        m_pTexture->Bind(GL_TEXTURE0);
+        /**
+    第一个参数是要渲染的图元的类型
+    第二个参数是索引缓冲中用于产生图元的索引个数
+    第三个参数是每一个索引值的数据类型,必须要告诉GPU单个索引值的大小，否则GPU无法知道如何
+    解析索引缓冲区。索引值可用的类型主要有：GL_UNSIGNED_BYTE, GL_UNSIGNED_SHORT,
+    GL_UNSIGNED_INT。如果索引的范围很小应该选择小的数据类型来节省空间，
+    如果索引范围很大自然就要根据需要选择更大的数据类型
+    最后一个参数告诉GPU从索引缓冲区起始位置到到第一个需要扫描的索引值得偏移byte数，这个在使用
+    同一个索引缓冲来保存多个物体的索引时很有用，通过定义偏移量和索引个数可以告诉GPU去渲染
+    哪一个物体，在我们的例子中我们从一开始扫描所以定义偏移量为0。
+    注意最后一个参数的类型是GLvoid*，所以如果不是0的话必须要转换成那个参数类型。
+          */
+        // 索引绘制图形
+        glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, 0);
+
+        glDisableVertexAttribArray(0);//禁用顶点数据
+        glDisableVertexAttribArray(1);//禁用纹理数据
+
+        glutSwapBuffers();// 交换前后缓存
+    }
+
+    virtual void KeyboardCB(int key, int keyState)
+    {
+        std::cout << "key:" << key << ",state:" << keyState << std::endl;
+        switch (key) {
+            case OGLDEV_KEY_ESCAPE:
+            case OGLDEV_KEY_q:
+                    GLUTBackendLeaveMainLoop();
+                    break;
+
+            case OGLDEV_KEY_a:
+                m_directionalLight.AmbientIntensity += 0.05f;
+                break;
+
+            case OGLDEV_KEY_s:
+                m_directionalLight.AmbientIntensity -= 0.05f;
+                break;
+        }
+    }
+    virtual void PassiveMouseCB(int x, int y)
+    {
+        //m_pGameCamera->OnMouse(x, y);
+    }
+private:
+    GLuint m_VBO;//操作顶点缓冲器对象
+    GLuint m_IBO;// 索引缓冲对象的句柄
+    LightingTechnique* m_pEffect;
+    Texture* m_pTexture;//纹理控制
+    Camera* m_pGameCamera;//相机控制
+    float m_scale;//控制图形周期性变化
+    DirectionalLight m_directionalLight;//控制灯光
+    PersProjInfo m_persProjInfo;// 透视变换配置参数数据结构
     /**
-函数glShaderSource以shader对象为参数，使你可以灵活的定义代码来源。
-shader源代码（也就是我们所常说的shader脚本）可以由多个字符串数组排布组合而成，
-你需要提供一个指针数组来对应指向这些字符窜数组，同时要提供一个整型数组来对应表示每个数组的长度。
-为了简单，我们这里只使用一个字符串数组来保存所有的shader源代码，并且分别用数组的一个元素来分
-别指向这个字符串数组和表示数组的长度。
-第二个参数表示的是这两个数组的元素个数（我们的例子中则只有1个）。
+     * 创建顶点缓冲器
      */
-    glShaderSource(ShaderObj, 1, p, Lengths);
-    glCompileShader(ShaderObj);// 编译shader对象
+    void CreateVertexBuffer()
+    {
+        // 创建含有一个顶点的顶点数组
+        /*Vector3f Vertices[4];
+        Vertices[0] = Vector3f(-1.0f, -1.0f, 0.5773f);
+        Vertices[1] = Vector3f(0.0f, -1.0f, -1.15475f);
+        Vertices[2] = Vector3f(1.0f, -1.0f, 0.5773f);
+        Vertices[3] = Vector3f(0.0f, 1.0f, 0.0f);*/
+        Vertex Vertices[4] = { Vertex(Vector3f(-1.0f, -1.0f, 0.5773f), Vector2f(0.0f, 0.0f)),
+                               Vertex(Vector3f(0.0f, -1.0f, -1.15475f), Vector2f(1.0f, 0.0f)),
+                               Vertex(Vector3f(1.0f, -1.0f, 0.5773f),  Vector2f(1.0f, 1.0f)),
+                               Vertex(Vector3f(0.0f, 1.0f, 0.0f),      Vector2f(0.0f, 1.0f)) };
 
-    // 检查和shader相关的错误
-    GLint success;
-    glGetShaderiv(ShaderObj, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        GLchar InfoLog[1024];
-        glGetShaderInfoLog(ShaderObj, 1024, NULL, InfoLog);
-        fprintf(stderr, "Error compiling shader type %d: '%s'\n", ShaderType, InfoLog);
-        exit(1);
+
+        /**
+          glGen*前缀的函数来产生不同类型的对象。它们通常有两个参数：
+        第一个参数用来定义你想创建的对象的数量;
+        第二个参数是一个GLuint变量的数组的地址，来存储分配给你的引用变量handles
+            （要确保这个数组足够大来处理你的请求！）
+        以后对这个函数的调用将不会重复产生相同的handle对象，
+        除非你先使用glDeleteBuffers删除他们
+          */
+        // 创建缓冲器
+        glGenBuffers(1, &m_VBO);
+        /**
+          将handle与一个目标的名称进行绑定，然后在该目标上执行命令.
+        这些指令只会在与handle绑定的目标上生效直到另外有其他的对象
+        跟这个handle绑定或者这个handle被置空。
+        目标名GL_ARRAY_BUFFER意思是这个buffer将存储一个顶点的数组。
+        另外一个是GL_ELEMENT_ARRAY_BUFFER,意思是这个buffer存储的是另一个buffer中顶点的标记
+          */
+        // 绑定GL_ARRAY_BUFFER缓冲器
+        glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
+        /**
+          往里面添加数据。这个回调函数取得我们之前绑定的目标名参数GL_ARRAY_BUFFER，
+        还有数据的比特数参数，顶点数组的地址，还有一个表示这个数据模式的标志变量。
+        因为我们不会去改变这个buffer的内容所以这里用了GL_STATIC_DRAW标志，
+        相反的标志是GL_DYNAMIIC_DRAW, 这个只是给OpenGL的一个提示来给一些觉得合理的标志量使用，
+        驱动程序可以通过它来进行启发式的优化（比如：内存中哪个位置最合适存储这个buffer缓冲）
+          */
+        // 绑定顶点数据
+        glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
+    }
+    // 创建索引缓冲器
+    void CreateIndexBuffer()
+    {
+        // 四个三角形面的顶点索引集
+        unsigned int Indices[] = { 0, 3, 1,
+                                   1, 3, 2,
+                                   2, 3, 0,
+                                   0, 1, 2 };
+        // 创建缓冲区
+        glGenBuffers(1, &m_IBO);
+        // 绑定缓冲区
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
+        // 添加缓冲区数据
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
     }
 
-    // 将编译好的shader对象绑定到program object程序对象上
-    glAttachShader(ShaderProgram, ShaderObj);
-}
-
-// 编译着色器函数
-static void CompileShaders()
-{
-    // 创建着色器程序,我们将把所有的着色器连接到这个对象上
-    GLuint ShaderProgram = glCreateProgram();
-    // 检查是否创建成功
-    if (ShaderProgram == 0) {
-        fprintf(stderr, "Error creating shader program\n");
-        exit(1);
-    }
-
-    // 存储着色器文本的字符串缓冲
-    string vs, fs;
-    // 分别读取着色器文件中的文本到字符串缓冲区
-    if (!ReadFile(pVSFileName, vs)) {
-        exit(1);
-    };
-    if (!ReadFile(pFSFileName, fs)) {
-        exit(1);
-    };
-
-    // 添加顶点着色器和片段着色器
-    AddShader(ShaderProgram, vs.c_str(), GL_VERTEX_SHADER);
-    AddShader(ShaderProgram, fs.c_str(), GL_FRAGMENT_SHADER);
-
-    // 链接shader着色器程序，并检查程序相关错误
-    GLint Success = 0;
-    GLchar ErrorLog[1024] = { 0 };
-    /**
-编译好所有的shader对象并将他们绑定到程序中后我就可以连接他们了。注意在完成程序的连接后你
-可以通过调用函数glDetachShader和glDeleteShader来清除每个中介shader对象。
-OpenGL保存着由它产生的多数对象的引用计数，如果一个shader对象被创建后又被删除的话驱动
-程序也会同时清除掉它，但是如果他被绑定在程序上，只调用glDeleteShader函数只是会标记它等待
-删除，只有等你调用glDetachShader后它的引用计数才会被置零然后被移除掉。
-     */
-    glLinkProgram(ShaderProgram);
-    glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
-    if (Success == 0) {
-        glGetProgramInfoLog(ShaderProgram, sizeof(ErrorLog), NULL, ErrorLog);
-        fprintf(stderr, "Error linking shader program: '%s'\n", ErrorLog);
-        exit(1);
-    }
-
-    // 检查验证在当前的管线状态程序是否可以被执行
-    glValidateProgram(ShaderProgram);
-    glGetProgramiv(ShaderProgram, GL_VALIDATE_STATUS, &Success);
-    if (!Success) {
-        glGetProgramInfoLog(ShaderProgram, sizeof(ErrorLog), NULL, ErrorLog);
-        fprintf(stderr, "Invalid shader program: '%s'\n", ErrorLog);
-        exit(1);
-    }
-/**
-这个程序将在所有的draw call中一直生效直到你用另一个替换掉它或者使用glUseProgram指令
-将其置NULL明确地禁用它。如果你创建的shader程序只包含一种类型的shader（只是为某一个
-阶段添加的自定义shader），那么在其他阶段的该操作将会使用它们默认的固定功能操作
-  */
-    // 设置到管线声明中来使用上面成功建立的shader程序
-    glUseProgram(ShaderProgram);
-
-    // 查询获取一致变量的位置,执行环境映射到shader着色器执行环境
-    gScaleLocation = glGetUniformLocation(ShaderProgram, "gScale");
-    // 检查错误
-    assert(gScaleLocation != 0xFFFFFFFF);
-
-    gWVPLocation = glGetUniformLocation(ShaderProgram, "gWVP");
-    assert(gWVPLocation != 0xFFFFFFFF);
-
-    gSampler = glGetUniformLocation(ShaderProgram, "gSampler");
-    assert(gSampler != 0xFFFFFFFF);
-}
+};
 
 int main(int argc, char *argv[])
 {
-    // 初始化GLUT
-    glutInit(&argc, argv);
-
-    // 显示模式：双缓冲、RGBA
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
-
-    // 窗口设置
-    glutInitWindowSize(480, 320);      // 窗口尺寸
-    glutInitWindowPosition(100, 100);  // 窗口位置
-    glutCreateWindow("Tutorial 02");   // 窗口标题
-
-    //glutGameModeString("1024x768@32");
-    //glutEnterGameMode();//进入游戏模式
-
-    // 开始渲染
-    InitializeGlutCallbacks();
-
-    // 相机变换
-    pGameCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT);
-
-    // 检查GLEW是否就绪，必须要在GLUT初始化之后
-    GLenum res = glewInit();
-    if (res != GLEW_OK) {
-        fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
-        return 1;
-    }
-    printf("GL version: %s\n", glGetString(GL_VERSION));
-
-    // 缓存清空后的颜色值
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    //glFrontFace()函数告诉OpenGL三角形的顶点是按照顺时针顺序定义的
-    glFrontFace(GL_CW);
-    //glCullFace()告诉GPU剔除三角形的背面
-    glCullFace(GL_BACK);
-    //开启面剔除本身（默认是关闭的）
-    glEnable(GL_CULL_FACE);
-
-    // 创建顶点缓冲器
-    CreateVertexBuffer();
-    CreateIndexBuffer();
-    // 编译着色器
-    CompileShaders();
-    //将要使用的纹理单元的索引放到shader中的取样器一致变量里
-    glUniform1i(gSampler, 0);
-
-    //创建纹理对象,1.纹理目标类型  2.文件名
-    pTexture = new Texture(GL_TEXTURE_2D, textureName);
-    //加载纹理
-    if (!pTexture->Load()) {
+    GLUTBackendInit(argc,argv,false,false);
+    if(!GLUTBackendCreateWindow(WINDOW_WIDTH,WINDOW_HEIGHT,
+                                false,"Hello,GL")){
         return 1;
     }
 
-    // 初始化透视变换配置参数
-    gPersProjInfo.FOV = 60.0f;
-    gPersProjInfo.Height = WINDOW_HEIGHT;
-    gPersProjInfo.Width = WINDOW_WIDTH;
-    gPersProjInfo.zNear = 1.0f;
-    gPersProjInfo.zFar = 100.0f;
+    HelloGL* pApp = new HelloGL;
 
-    // 通知开始GLUT的内部循环
-    glutMainLoop();
+    if (!pApp->Init()) {
+        return 1;
+    }
 
+    pApp->Run();
+
+    delete pApp;
 
     return 0;
-    //QCoreApplication a(argc, argv);
-    //return a.exec();
 }

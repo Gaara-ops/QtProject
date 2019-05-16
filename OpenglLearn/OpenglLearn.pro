@@ -18,7 +18,12 @@ SOURCES += main.cpp \
     math3d.cpp \
     pipeline.cpp \
     camera.cpp \
-    texture.cpp
+    texture.cpp \
+    technique.cpp \
+    glut_backend.cpp \
+    openglapp.cpp \
+    lighting_technique.cpp \
+    opengl_util.cpp
 
 freeglutDir_D = F:/opengl/freeglut-3.0.0/qt5.3/lib-debug
 freeglutDir   = F:/opengl/freeglut-3.0.0/qt5.3/lib-release
@@ -64,6 +69,12 @@ HEADERS += \
     pipeline.h \
     camera.h \
     Keys.h \
-    texture.h
+    texture.h \
+    technique.h \
+    glut_backend.h \
+    icallback.h \
+    openglapp.h \
+    commonlight.h \
+    lighting_technique.h
 
 
