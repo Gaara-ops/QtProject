@@ -47,9 +47,9 @@ public:
         m_scale = 0.0f;
         //平行光设置
         m_directionalLight.Color = Vector3f(1.0f, 1.0f, 1.0f);
-        m_directionalLight.AmbientIntensity = 0.5f;
-        m_directionalLight.DiffuseIntensity = 0.75f;
-        m_directionalLight.Direction = Vector3f(1.0f, 0.0, 0.0);
+        m_directionalLight.AmbientIntensity = 0.1f;
+        m_directionalLight.DiffuseIntensity = 0.2f;
+        m_directionalLight.Direction = Vector3f(0.0f, 0.0, 1.0);
         //透视变换参数设置
         m_persProjInfo.FOV = 60.0f;
         m_persProjInfo.Height = WINDOW_HEIGHT;
@@ -109,13 +109,16 @@ public:
         // 实例化一个pipeline管线类对象，初始化配置好之后传递给shader
         Pipeline p;
         p.Rotate(0.0f, sinf(m_scale) * 90.0f, 0.0f);
-        p.WorldPos(0.0f, 0.0f, 3.0f);
+        p.WorldPos(0.0f, 0.0f, 1.0f);
         p.SetCamera(m_pGameCamera->GetPos(), m_pGameCamera->GetTarget(), m_pGameCamera->GetUp());
         p.SetPerspectiveProj(m_persProjInfo);
         m_pEffect->SetWVP(p.GetWVPTrans());
         const Matrix4f& WorldTransformation = p.GetWorldTrans();
         m_pEffect->SetWorldMatrix(WorldTransformation);
         m_pEffect->SetDirectionalLight(m_directionalLight);
+        m_pEffect->SetEyeWorldPos(m_pGameCamera->GetPos());
+        m_pEffect->SetMatSpecularIntensity(1.0f);
+        m_pEffect->SetMatSpecularPower(32);
 
         glEnableVertexAttribArray(0);//开启顶点属性
         glEnableVertexAttribArray(1);//启用纹理属性
@@ -195,7 +198,7 @@ public:
     }
     virtual void PassiveMouseCB(int x, int y)
     {
-        //m_pGameCamera->OnMouse(x, y);
+        m_pGameCamera->OnMouse(x, y);
     }
 private:
     GLuint m_VBO;//操作顶点缓冲器对象
