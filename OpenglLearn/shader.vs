@@ -3,11 +3,14 @@
 layout (location = 0) in vec3 Position;
 // 绑定定点属性名和属性，方式二缓冲属性和shader属性对应映射
 layout (location = 1) in vec2 TexCoord;
+layout (location = 2) in vec3 Normal;
 
 // 平移,旋转,缩放变换矩阵一致变量
 uniform mat4 gWVP;
+uniform mat4 gWorld;
 
 out vec2 TexCoord0;
+out vec3 Normal0;
 
 void main()
 {
@@ -25,4 +28,5 @@ void main()
     //Color = vec4(clamp(Position, 0.0, 1.0), 1.0);
 
     TexCoord0 = TexCoord;
+    Normal0 = (gWorld * vec4(Normal, 0.0)).xyz;
 }

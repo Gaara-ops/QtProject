@@ -25,6 +25,7 @@ struct Vertex
 {
     Vector3f m_pos;
     Vector2f m_tex;
+    Vector3f m_normal;
 
     Vertex() {}
 
@@ -32,6 +33,7 @@ struct Vertex
     {
         m_pos = pos;
         m_tex = tex;
+        m_normal = Vector3f(0.0f, 0.0f, 0.0f);
     }
 };
 
@@ -46,6 +48,8 @@ public:
         //平行光设置
         m_directionalLight.Color = Vector3f(1.0f, 1.0f, 1.0f);
         m_directionalLight.AmbientIntensity = 0.5f;
+        m_directionalLight.DiffuseIntensity = 0.75f;
+        m_directionalLight.Direction = Vector3f(1.0f, 0.0, 0.0);
         //透视变换参数设置
         m_persProjInfo.FOV = 60.0f;
         m_persProjInfo.Height = WINDOW_HEIGHT;
@@ -60,10 +64,19 @@ public:
     }
     bool Init()
     {
-        m_pGameCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT);
+        Vector3f Pos(0.0f, 0.0f, -3.0f);
+        Vector3f Target(0.0f, 0.0f, 1.0f);
+        Vector3f Up(0.0, 1.0f, 0.0f);
+        m_pGameCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT, Pos, Target, Up);
 
-        CreateVertexBuffer();//创建顶点数据
-        CreateIndexBuffer();//创建索引数据
+        unsigned int Indices[] = { 0, 3, 1,
+                                   1, 3, 2,
+                                   2, 3, 0,
+                                   1, 2, 0 };
+
+        CreateIndexBuffer(Indices, sizeof(Indices));
+
+        CreateVertexBuffer(Indices, ARRAY_SIZE_IN_ELEMENTS(Indices));
 
         m_pEffect = new LightingTechnique();//管理着色器
         if (!m_pEffect->Init())
@@ -92,18 +105,21 @@ public:
 
         glClear(GL_COLOR_BUFFER_BIT);// 清空颜色缓存
 
-        m_scale += 0.0002f;
+        m_scale += 0.0005f;
         // 实例化一个pipeline管线类对象，初始化配置好之后传递给shader
         Pipeline p;
-        p.Rotate(0.0f, m_scale, 0.0f);
+        p.Rotate(0.0f, sinf(m_scale) * 90.0f, 0.0f);
         p.WorldPos(0.0f, 0.0f, 3.0f);
         p.SetCamera(m_pGameCamera->GetPos(), m_pGameCamera->GetTarget(), m_pGameCamera->GetUp());
         p.SetPerspectiveProj(m_persProjInfo);
         m_pEffect->SetWVP(p.GetWVPTrans());
+        const Matrix4f& WorldTransformation = p.GetWorldTrans();
+        m_pEffect->SetWorldMatrix(WorldTransformation);
         m_pEffect->SetDirectionalLight(m_directionalLight);
 
         glEnableVertexAttribArray(0);//开启顶点属性
         glEnableVertexAttribArray(1);//启用纹理属性
+        glEnableVertexAttribArray(2);
         glBindBuffer(GL_ARRAY_BUFFER, m_VBO);// 绑定GL_ARRAY_BUFFER缓冲器
         /**
     第1个参定义了属性的索引，再这个例子中我们知道这个索引默认是0，
@@ -120,9 +136,14 @@ public:
     在有位置数据和法向量数据的结构中，位置的偏移量为0，而法向量的偏移量则为12。
           */
         // 告诉管线怎样解析bufer中的数据
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+                              sizeof(Vertex), 0);
         //定义顶点缓冲器中纹理坐标的位置
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const GLvoid*)12);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
+                              sizeof(Vertex), (const GLvoid*)12);
+
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
+                              sizeof(Vertex), (const GLvoid*)20);
         ///索引绘制
         // 每次在绘制之前绑定索引缓冲
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
@@ -144,6 +165,7 @@ public:
 
         glDisableVertexAttribArray(0);//禁用顶点数据
         glDisableVertexAttribArray(1);//禁用纹理数据
+        glDisableVertexAttribArray(2);
 
         glutSwapBuffers();// 交换前后缓存
     }
@@ -160,9 +182,14 @@ public:
             case OGLDEV_KEY_a:
                 m_directionalLight.AmbientIntensity += 0.05f;
                 break;
-
             case OGLDEV_KEY_s:
                 m_directionalLight.AmbientIntensity -= 0.05f;
+                break;
+            case OGLDEV_KEY_z:
+                m_directionalLight.DiffuseIntensity += 0.05f;
+                break;
+            case OGLDEV_KEY_x:
+                m_directionalLight.DiffuseIntensity -= 0.05f;
                 break;
         }
     }
@@ -179,10 +206,35 @@ private:
     float m_scale;//控制图形周期性变化
     DirectionalLight m_directionalLight;//控制灯光
     PersProjInfo m_persProjInfo;// 透视变换配置参数数据结构
+
+    //计算法向量
+    void CalcNormals(const unsigned int* pIndices, unsigned int IndexCount,
+                     Vertex* pVertices, unsigned int VertexCount)
+    {
+        // Accumulate each triangle normal into each of the triangle vertices
+        for (unsigned int i = 0 ; i < IndexCount ; i += 3) {
+            unsigned int Index0 = pIndices[i];
+            unsigned int Index1 = pIndices[i + 1];
+            unsigned int Index2 = pIndices[i + 2];
+            Vector3f v1 = pVertices[Index1].m_pos - pVertices[Index0].m_pos;
+            Vector3f v2 = pVertices[Index2].m_pos - pVertices[Index0].m_pos;
+            Vector3f Normal = v1.Cross(v2);
+            Normal.Normalize();
+
+            pVertices[Index0].m_normal += Normal;
+            pVertices[Index1].m_normal += Normal;
+            pVertices[Index2].m_normal += Normal;
+        }
+
+        // Normalize all the vertex normals
+        for (unsigned int i = 0 ; i < VertexCount ; i++) {
+            pVertices[i].m_normal.Normalize();
+        }
+    }
     /**
      * 创建顶点缓冲器
      */
-    void CreateVertexBuffer()
+    void CreateVertexBuffer(const unsigned int* pIndices, unsigned int IndexCount)
     {
         // 创建含有一个顶点的顶点数组
         /*Vector3f Vertices[4];
@@ -191,11 +243,13 @@ private:
         Vertices[2] = Vector3f(1.0f, -1.0f, 0.5773f);
         Vertices[3] = Vector3f(0.0f, 1.0f, 0.0f);*/
         Vertex Vertices[4] = { Vertex(Vector3f(-1.0f, -1.0f, 0.5773f), Vector2f(0.0f, 0.0f)),
-                               Vertex(Vector3f(0.0f, -1.0f, -1.15475f), Vector2f(1.0f, 0.0f)),
-                               Vertex(Vector3f(1.0f, -1.0f, 0.5773f),  Vector2f(1.0f, 1.0f)),
-                               Vertex(Vector3f(0.0f, 1.0f, 0.0f),      Vector2f(0.0f, 1.0f)) };
+                               Vertex(Vector3f(0.0f, -1.0f, -1.15475f), Vector2f(0.5f, 0.0f)),
+                               Vertex(Vector3f(1.0f, -1.0f, 0.5773f),  Vector2f(1.0f, 0.0f)),
+                               Vertex(Vector3f(0.0f, 1.0f, 0.0f),      Vector2f(0.5f, 1.0f)) };
 
+        unsigned int VertexCount = ARRAY_SIZE_IN_ELEMENTS(Vertices);
 
+        CalcNormals(pIndices, IndexCount, Vertices, VertexCount);
         /**
           glGen*前缀的函数来产生不同类型的对象。它们通常有两个参数：
         第一个参数用来定义你想创建的对象的数量;
@@ -226,19 +280,14 @@ private:
         glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
     }
     // 创建索引缓冲器
-    void CreateIndexBuffer()
+    void CreateIndexBuffer(const unsigned int* pIndices, unsigned int SizeInBytes)
     {
-        // 四个三角形面的顶点索引集
-        unsigned int Indices[] = { 0, 3, 1,
-                                   1, 3, 2,
-                                   2, 3, 0,
-                                   0, 1, 2 };
         // 创建缓冲区
         glGenBuffers(1, &m_IBO);
         // 绑定缓冲区
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IBO);
         // 添加缓冲区数据
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, SizeInBytes, pIndices, GL_STATIC_DRAW);
     }
 
 };
