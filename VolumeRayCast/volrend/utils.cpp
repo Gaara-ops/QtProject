@@ -87,7 +87,7 @@ namespace vr
 
           if (normalized_gradient)
           {
-            s2s1 = glm::normalize<double>(s2s1);
+            s2s1 = glm::normalize(s2s1);
           }
           else
           {
@@ -139,7 +139,7 @@ namespace vr
 
             average = average / (double)num;
             if (average.x != 0.0f && average.y != 0.0f && average.z != 0.0f)
-              average = glm::normalize<double>(average);
+              average = glm::normalize(average);
 
             gradients[index++] = average;
           }

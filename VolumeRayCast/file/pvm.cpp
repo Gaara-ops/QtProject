@@ -200,7 +200,7 @@ unsigned char* DDSV3::readPVMvolume (const char* filename,
     else return(NULL);
 
     ptr = &data[5];
-    if (sscanf_s((char*)ptr, "%d %d %d\n%g %g %g\n", width, height, depth, &sx, &sy, &sz) != 6) ERRORMSG();
+    if (sscanf((char*)ptr, "%d %d %d\n%g %g %g\n", width, height, depth, &sx, &sy, &sz) != 6) ERRORMSG();
     if (*width < 1 || *height < 1 || *depth < 1 || sx <= 0.0f || sy <= 0.0f || sz <= 0.0f) ERRORMSG();
     ptr = (unsigned char*)strchr((char*)ptr, '\n') + 1;
   }
@@ -210,7 +210,7 @@ unsigned char* DDSV3::readPVMvolume (const char* filename,
     while (*ptr == '#')
       while (*ptr++ != '\n');
 
-    if (sscanf_s((char*)ptr, "%d %d %d\n", width, height, depth) != 3) ERRORMSG();
+    if (sscanf((char*)ptr, "%d %d %d\n", width, height, depth) != 3) ERRORMSG();
     if (*width < 1 || *height < 1 || *depth < 1) ERRORMSG();
   }
 
@@ -222,7 +222,7 @@ unsigned char* DDSV3::readPVMvolume (const char* filename,
   }
 
   ptr = (unsigned char*)strchr((char*)ptr, '\n') + 1;
-  if (sscanf_s((char *)ptr, "%d\n", &numc) != 1) ERRORMSG();
+  if (sscanf((char *)ptr, "%d\n", &numc) != 1) ERRORMSG();
   if (numc<1) ERRORMSG();
 
   if (components != NULL) *components = numc;
@@ -307,7 +307,7 @@ unsigned char* DDSV3::readPNMimage (const char* filename,
   memcpy(str, data, 3);
   str[3] = '\0';
 
-  if (sscanf_s(str, "P%1d\n", &pnmtype) != 1) return(NULL);
+  if (sscanf(str, "P%1d\n", &pnmtype) != 1) return(NULL);
 
   ptr1 = data + 3;
   while (*ptr1 == '\n' || *ptr1 == '#')
@@ -336,7 +336,7 @@ unsigned char* DDSV3::readPNMimage (const char* filename,
   memcpy(str, ptr1, ptr2 - ptr1);
   str[ptr2 - ptr1] = '\0';
 
-  if (sscanf_s(str, "%d %d\n%d\n", width, height, &maxval) != 3) ERRORMSG();
+  if (sscanf(str, "%d %d\n%d\n", width, height, &maxval) != 3) ERRORMSG();
 
   if (*width<1 || *height<1) ERRORMSG();
 

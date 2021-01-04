@@ -48,7 +48,7 @@ struct LightAttenuation
     }
 };
 
-
+//点光源
 class PointLight : public BaseLight
 {
 public:

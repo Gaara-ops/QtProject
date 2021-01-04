@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <QDebug>
 
 #include "GL/glew.h"//一定要在GLUT引入之前引入,其他OpenGL头文件放在这个之后
 #include "GL/freeglut.h"
@@ -20,6 +21,7 @@
 // 屏幕宽高宏定义
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
+
 static const float FieldDepth = 20.0f;
 static const float FieldWidth = 10.0f;
 
@@ -49,15 +51,15 @@ public:
         m_scale = 0.0f;
         //平行光设置
         m_directionalLight.Color = Vector3f(1.0f, 1.0f, 1.0f);
-        m_directionalLight.AmbientIntensity = 0.1f;
-        m_directionalLight.DiffuseIntensity = 0.2f;
-        m_directionalLight.Direction = Vector3f(0.0f, 0.0, 1.0);
+        m_directionalLight.AmbientIntensity = 0.3f;
+        m_directionalLight.DiffuseIntensity = 0.3f;
+        m_directionalLight.Direction = Vector3f(1.0f, -1.0, 0.0);
         //透视变换参数设置
         m_persProjInfo.FOV = 60.0f;
         m_persProjInfo.Height = WINDOW_HEIGHT;
         m_persProjInfo.Width = WINDOW_WIDTH;
         m_persProjInfo.zNear = 1.0f;
-        m_persProjInfo.zFar = 100.0f;
+        m_persProjInfo.zFar = 50.0f;
     }
     ~HelloGL(){
         delete m_pEffect;
@@ -66,10 +68,19 @@ public:
     }
     bool Init()
     {
-        Vector3f Pos(0.0f, 0.0f, -3.0f);
+        Vector3f Pos(5.0f, 1.0f, -3.0f);
         Vector3f Target(0.0f, 0.0f, 1.0f);
-        Vector3f Up(0.0, 1.0f, 0.0f);
+        Vector3f Up(0.0, 1.0f,0.0f);
         m_pGameCamera = new Camera(WINDOW_WIDTH, WINDOW_HEIGHT, Pos, Target, Up);
+
+        /*unsigned int Indices[] = { 0, 4, 5,
+                                   0, 5, 1,
+                                   1, 5, 6,
+                                   1, 6, 2,
+                                   2, 6, 7,
+                                   2, 7, 3,
+                                   3, 7, 4,
+                                   3, 4, 0 };*/
 
         unsigned int Indices[] = { 0, 3, 1,
                                    1, 3, 2,
@@ -93,6 +104,7 @@ public:
         if (!m_pTexture->Load()) {
             return false;
         }
+        qDebug() << "init end";
         return true;
     }
 
@@ -105,11 +117,13 @@ public:
     {
         m_pGameCamera->OnRender();
 
+        glClearColor(1.0f,1.0f,0.0f,1.0f);
         glClear(GL_COLOR_BUFFER_BIT);// 清空颜色缓存
 
         m_scale += 0.0005f;
 
         PointLight pl[2];
+
         pl[0].DiffuseIntensity = 0.5f;
         pl[0].Color = Vector3f(1.0f, 0.5f, 0.0f);
         pl[0].Position = Vector3f(3.0f, 1.0f, FieldDepth * (cosf(m_scale) + 1.0f) / 2.0f);
@@ -120,11 +134,10 @@ public:
         pl[1].Attenuation.Linear = 0.1f;
         m_pEffect->SetPointLights(2, pl);
 
-
         // 实例化一个pipeline管线类对象，初始化配置好之后传递给shader
         Pipeline p;
-        p.Rotate(0.0f, sinf(m_scale) * 90.0f, 0.0f);
-        p.WorldPos(0.0f, 0.0f, 1.0f);
+//        p.Rotate(0.0f, sinf(m_scale) * 90.0f, 0.0f);
+        p.WorldPos(0, 0, 1.0f);
         p.SetCamera(m_pGameCamera->GetPos(), m_pGameCamera->GetTarget(), m_pGameCamera->GetUp());
         p.SetPerspectiveProj(m_persProjInfo);
         m_pEffect->SetWVP(p.GetWVPTrans());
@@ -132,8 +145,8 @@ public:
         m_pEffect->SetWorldMatrix(WorldTransformation);
         m_pEffect->SetDirectionalLight(m_directionalLight);
         m_pEffect->SetEyeWorldPos(m_pGameCamera->GetPos());
-        m_pEffect->SetMatSpecularIntensity(1.0f);
-        m_pEffect->SetMatSpecularPower(32);
+        m_pEffect->SetMatSpecularIntensity(0.5f);
+        m_pEffect->SetMatSpecularPower(10);
 
         glEnableVertexAttribArray(0);//开启顶点属性
         glEnableVertexAttribArray(1);//启用纹理属性
@@ -213,7 +226,7 @@ public:
     }
     virtual void PassiveMouseCB(int x, int y)
     {
-        m_pGameCamera->OnMouse(x, y);
+//        m_pGameCamera->OnMouse(x, y);
     }
 private:
     GLuint m_VBO;//操作顶点缓冲器对象
@@ -255,15 +268,21 @@ private:
     void CreateVertexBuffer(const unsigned int* pIndices, unsigned int IndexCount)
     {
         // 创建含有一个顶点的顶点数组
-        /*Vector3f Vertices[4];
-        Vertices[0] = Vector3f(-1.0f, -1.0f, 0.5773f);
-        Vertices[1] = Vector3f(0.0f, -1.0f, -1.15475f);
-        Vertices[2] = Vector3f(1.0f, -1.0f, 0.5773f);
-        Vertices[3] = Vector3f(0.0f, 1.0f, 0.0f);*/
-        Vertex Vertices[4] = { Vertex(Vector3f(-1.0f, -1.0f, 0.5773f), Vector2f(0.0f, 0.0f)),
-                               Vertex(Vector3f(0.0f, -1.0f, -1.15475f), Vector2f(0.5f, 0.0f)),
-                               Vertex(Vector3f(1.0f, -1.0f, 0.5773f),  Vector2f(1.0f, 0.0f)),
-                               Vertex(Vector3f(0.0f, 1.0f, 0.0f),      Vector2f(0.5f, 1.0f)) };
+        /*Vertex Vertices[8]={ Vertex(Vector3f(0.0f, 0.0f, 0.0f),  Vector2f(0.0f, 0.0f )),
+                             Vertex(Vector3f(0.0f, 10.0f, 0.0f), Vector2f(0.33f, 0.0f)),
+                             Vertex(Vector3f(10.0f, 10.0f, 0.0f),Vector2f(0.66f, 0.0f)),
+                             Vertex(Vector3f(0.0f, 10.0f, 0.0f), Vector2f(1.0f, 0.0f )),
+                             Vertex(Vector3f(0.0f, 0.0f, 10.0f), Vector2f(0.0f, 1.0f )),
+                             Vertex(Vector3f(0.0f, 10.0f, 10.0f),Vector2f(0.33f, 1.0f)),
+                             Vertex(Vector3f(10.0f, 10.0f,10.0f),Vector2f(0.66f, 1.0f)),
+                             Vertex(Vector3f(0.0f, 10.0f, 10.0f),Vector2f(1.0f, 1.0f )) };*/
+        int scalenum = 1;
+/*绘制四面体*/
+        Vertex Vertices[4] = {Vertex(Vector3f(-1.0f*scalenum, -1.0f*scalenum, 0.5773f  *scalenum), Vector2f(0.0f, 0.0f)),
+                               Vertex(Vector3f(0.0f*scalenum, -1.0f*scalenum, -1.15475f*scalenum), Vector2f(0.5f, 0.0f)),
+                               Vertex(Vector3f(1.0f*scalenum, -1.0f*scalenum, 0.5773f  *scalenum),  Vector2f(1.0f, 0.0f)),
+                               Vertex(Vector3f(0.0f*scalenum, 1.0f *scalenum, 0.0f     *scalenum),      Vector2f(0.5f, 1.0f)) };
+
 
         unsigned int VertexCount = ARRAY_SIZE_IN_ELEMENTS(Vertices);
 

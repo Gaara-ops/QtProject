@@ -80,7 +80,7 @@ void RenderingManager::InitGL ()
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  glEnable(GL_CULL_FACE);
+  //glEnable(GL_CULL_FACE);
 
   glEnable(GL_TEXTURE_2D);
   glEnable(GL_TEXTURE_3D);
@@ -114,7 +114,7 @@ void RenderingManager::MainLoop ()
 void RenderingManager::SetWindowTitle ()
 {
   char buffer[512];
-  sprintf_s(buffer, "(%.2lf) %s [%s | %s]\0"
+  sprintf(buffer, "(%.2lf) %s [%s | %s]\0"
     , window_fps
     , curr_vol_renderer->GetVRModeName()
     , mgr_data.GetCurrentVolumeName().c_str()

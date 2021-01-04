@@ -164,10 +164,10 @@ void VR1Pass::CreateRenderingPass ()
 
   // Create Rendering Pass
   shader_rendering = new gl::Shader();
-  shader_rendering->AddShaderFile(gl::SHADER_TYPE::VERTEX, "shader/vr1pass/singlepass.vert");
-  shader_rendering->AddShaderFile(gl::SHADER_TYPE::FRAGMENT, "shader/raybboxintersection.frag");
-  shader_rendering->AddShaderFile(gl::SHADER_TYPE::FRAGMENT, "shader/blinnphonggradient.frag");
-  shader_rendering->AddShaderFile(gl::SHADER_TYPE::FRAGMENT, "shader/vr1pass/singlepass.frag");
+  shader_rendering->AddShaderFile(gl::SHADER_TYPE::VERTEX, "./shader/vr1pass/singlepass.vert");
+  shader_rendering->AddShaderFile(gl::SHADER_TYPE::FRAGMENT, "./shader/raybboxintersection.frag");
+  shader_rendering->AddShaderFile(gl::SHADER_TYPE::FRAGMENT, "./shader/blinnphonggradient.frag");
+  shader_rendering->AddShaderFile(gl::SHADER_TYPE::FRAGMENT, "./shader/vr1pass/singlepass.frag");
   shader_rendering->LoadAndLink();
   
   shader_rendering->Bind();

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
-
+#include <QDebug>
 
 #include "glut_backend.h"
 
@@ -101,6 +101,7 @@ void GLUTBackendInit(int argc, char** argv, bool WithDepth, bool WithStencil){
     glutInitDisplayMode(DisplayMode);//设置显示模式
 
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+    qDebug() << "GLUTBackendInit end";
 }
 
 
@@ -124,6 +125,7 @@ bool GLUTBackendCreateWindow(uint Width, uint Height, bool isFullScreen, const c
         fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
         return false;
     }
+    qDebug() << "GLUTBackendCreateWindow end";
 
     return true;
 }

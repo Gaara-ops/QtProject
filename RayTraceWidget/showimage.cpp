@@ -75,9 +75,9 @@ void ShowImage::mouseMoveEvent(QMouseEvent *e)
 
         QTime timetest;
         timetest.start();
-        rayinfo->AzimuthRayInfo(-rxf);
+        rayinfo->AzimuthRayInfo(rxf);
         //qDebug() << "Azimuth:"<<timetest.elapsed()/1000.0;
-        rayinfo->ElevationRayInfo(ryf);
+        rayinfo->ElevationRayInfo(-ryf);
         //qDebug() << "Elevation:"<<timetest.elapsed()/1000.0;
         rayinfo->updateImage(rayinfo->m_direction);
         //qDebug() << "updateImage:"<<timetest.elapsed()/1000.0;

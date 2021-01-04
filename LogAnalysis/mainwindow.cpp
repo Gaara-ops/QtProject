@@ -10,11 +10,45 @@ MainWindow::MainWindow(QWidget *parent) :
 	//response the mouse moving,default when the mouse down movind is activing
 	this->centralWidget()->setMouseTracking(1);
 	this->setMouseTracking(1);
+
+    DrawLine();
 }
 
 MainWindow::~MainWindow()
 {
+    qDebug() << m_allPos;
     delete ui;
+}
+
+void MainWindow::DrawLine()
+{
+    /*QFile file(QString("./test.txt"));
+    file.open( QIODevice::ReadOnly);
+    QByteArray ba = file.readAll();
+    ba.replace(" ","");
+    ba.replace("\n","");
+    file.close();
+    qDebug() << ba;
+
+    QJsonParseError err;
+    QJsonDocument doc = QJsonDocument::fromJson(ba, &err);
+    qDebug()<<"err.error" << err.error;
+
+    QVariantMap mapobj = doc.toVariant().toMap();
+    QJsonArray posarr = mapobj.value("CenterLinePoints").toJsonArray();
+    qDebug() << posarr.count();*/
+
+    QString tmmpos = "118,230|134,206|193,193|268,206|330,238|336,281|333,319|332,335|346,364|335,392|356,426|361,472|408,487|418,535|483,544|502,602|595,598|685,594";
+    QStringList tmplist = tmmpos.split("|");
+    for(int i=0;i<tmplist.size()-1;i++){
+        QString tpos0 = tmplist.at(i);
+        QStringList listpos0 = tpos0.split(",");
+        m_poss.push_back(QPointF(listpos0[0].toInt(),listpos0[1].toInt()));
+        QString tpos1 = tmplist.at(i+1);
+        QStringList listpos1 = tpos1.split(",");
+        m_lines.push_back(QLineF(QPointF(listpos0[0].toInt(),listpos0[1].toInt()),
+                QPointF(listpos1[0].toInt(),listpos1[1].toInt())));
+    }
 }
 
 void MainWindow::GetConrolPoint(QVector<QPoint>& oriPoslist,
@@ -123,10 +157,21 @@ void MainWindow::DrawCurve()
 void MainWindow::paintEvent(QPaintEvent *) {
 	if(m_drawCurve)
 		DrawCurve();
+
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+
+    painter.setPen(QPen(Qt::black, 2));
+    painter.drawLines(m_lines);
+
+    painter.setPen(QPen(Qt::red, 6));
+    painter.drawPoint(m_poss.at(1));
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *e)
 {
+    m_allPos += QString::number(e->pos().x()) + "," +
+            QString::number(e->pos().y()) + "|";
 	if(!m_drawCurve)
 		return;
 	if(e->button() == 0x00000001){

@@ -5,7 +5,7 @@
 #-------------------------------------------------
 include($$PWD/../Globe/Globe.pri)
 
-QT       += core gui multimediawidgets
+QT       += core gui multimediawidgets network concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

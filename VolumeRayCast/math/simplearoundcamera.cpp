@@ -154,7 +154,8 @@ int SimpleAroundCamera::MouseMotion (int x, int y)
 
       glm::quat p = glm::quat(0, eye.x, eye.y, eye.z);
 
-      glm::quat qy = glm::quat(cos(yrot), sin(yrot)*up);
+      glm::vec3 tmp2(up[0]*sin(yrot),up[1]*sin(yrot),up[2]*sin(yrot));
+      glm::quat qy = glm::quat(cos(yrot), tmp2);
 
       glm::vec3 loc_up = up;
 
@@ -164,7 +165,8 @@ int SimpleAroundCamera::MouseMotion (int x, int y)
         xrot = 0.0f;
 
       glm::vec3 vr = glm::normalize(glm::cross(glm::normalize(glm::vec3(center - eye)), loc_up));
-      glm::quat qx = glm::quat(cos(xrot), sin(xrot)*vr);
+      glm::vec3 tmp1(vr[0]*sin(xrot),vr[1]*sin(xrot),vr[2]*sin(xrot));
+      glm::quat qx = glm::quat(cos(xrot), tmp1);
 
       glm::quat rq =
         glm::cross(glm::cross(glm::cross(glm::cross(qx, qy), p),

@@ -1,12 +1,13 @@
 TEMPLATE = subdirs
 
 SUBDIRS += \
-    LogAnalysis \
+    #LogAnalysis \
     MyQtTest \
-    MemoryShow \
-    RayTracingTest \
-    TxtReader \
-    NetworkRequest \
-    MyRayTracingLearn \
-    RayTraceWidget \
-    OpenglLearn
+    #MemoryShow \
+    #RayTracingTest \
+    #TxtReader \
+    #NetworkRequest \
+    #MyRayTracingLearn \
+    #RayTraceWidget \
+    OpenglLearn \
+    VolumeRayCast

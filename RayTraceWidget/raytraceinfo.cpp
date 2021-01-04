@@ -13,7 +13,7 @@
 RayTraceInfo::RayTraceInfo()
 {
     //获取体信息
-    char *dirname = "../DICOM/20ceng";
+    char *dirname = "E:/workspace/DICOM/20ceng";
     dicomReader = vtkDICOMImageReader::New();
     dicomReader->SetDirectoryName(dirname);
     dicomReader->Update();
